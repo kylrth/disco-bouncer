@@ -1,0 +1,37 @@
+/* src/Login.css */
+.login-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: blue;
+  }
+  
+  .login-box {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Center the content horizontally */
+    max-width: 30%;
+    margin: 0 auto;
+  }
+  
+  .logo-container {
+    margin-bottom: 20px; /* Add margin between logo and input fields */
+  }
+  
+  .logo {
+    display: block;
+    margin: 0 auto 20px; /* Center the logo horizontally and add margin */
+  }
+  
+  .input-field {
+    width: 95%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
