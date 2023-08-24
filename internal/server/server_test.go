@@ -3,6 +3,7 @@ package server_test
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -26,7 +27,14 @@ import (
 
 var dbPool *pgxpool.Pool
 
-func TestMain(m *testing.M) {
+func TestMain(m *testing.M) { //nolint:cyclop // lots of setup
+	flag.Parse() // must be run before calling testing.Short()
+	if testing.Short() {
+		fmt.Println("skipping integration tests")
+
+		return
+	}
+
 	// connect to Docker
 	pool, err := dockertest.NewPool("")
 	if err != nil {

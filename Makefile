@@ -17,3 +17,7 @@ $(LINTER):
 .PHONY: lint
 lint: $(LINTER)
 	$(LINTER) run --deadline=2m
+
+.PHONY: test
+test:
+	go test -race -cover ./...
