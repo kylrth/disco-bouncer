@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -23,7 +24,7 @@ var (
 )
 
 // Login and store the session for later use by the client.
-func (s *AdminService) Login(user, pass string) error {
+func (s *AdminService) Login(ctx context.Context, user, pass string) error {
 	const p = "/login"
 
 	body := map[string]string{
@@ -31,11 +32,12 @@ func (s *AdminService) Login(user, pass string) error {
 		"password": pass,
 	}
 
-	resp, err := s.c.postJSON(p, body)
+	resp, err := s.c.postJSON(ctx, p, body)
 	if err != nil {
 		if errors.Is(err, ErrNotLoggedIn) {
 			return ErrInvalidCredentials
 		}
+
 		return err
 	}
 	resp.Body.Close() // If it was 200 OK, the body is "Login successful".
@@ -45,10 +47,10 @@ func (s *AdminService) Login(user, pass string) error {
 
 // Logout invalidates the currently held session. You will need to call Login again in order to use
 // the API.
-func (s *AdminService) Logout() error {
+func (s *AdminService) Logout(ctx context.Context) error {
 	const p = "/logout"
 
-	resp, err := s.c.post(p, "", nil)
+	resp, err := s.c.post(ctx, p, "", nil)
 	if err != nil {
 		return err
 	}
@@ -58,14 +60,14 @@ func (s *AdminService) Logout() error {
 }
 
 // ChangePassword updates the password on the server. Must be logged in.
-func (s *AdminService) ChangePassword(pass string) error {
+func (s *AdminService) ChangePassword(ctx context.Context, pass string) error {
 	const p = "/admin/pass"
 
 	body := map[string]string{
 		"password": pass,
 	}
 
-	resp, err := s.c.postJSON(p, body)
+	resp, err := s.c.postJSON(ctx, p, body)
 	if err != nil {
 		switch resp.StatusCode {
 		case http.StatusBadRequest:
@@ -78,6 +80,7 @@ func (s *AdminService) ChangePassword(pass string) error {
 			if strings.Contains(err.Error(), "Password too long") {
 				return ErrPasswordTooLong
 			}
+
 			fallthrough
 		default:
 			return err

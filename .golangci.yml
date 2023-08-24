@@ -1,0 +1,157 @@
+linters-settings:
+  dupl:
+    threshold: 100
+  exhaustive:
+    default-signifies-exhaustive: true
+  funlen:
+    lines: 100
+    statements: 50
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+  gocyclo:
+    min-complexity: 15
+  goimports:
+    local-prefixes: github.com/kylrth/api
+  gomnd:
+    settings:
+      mnd:
+        # don't include the "operation" and "assign"
+        checks: argument,case,condition,return
+  govet:
+    check-shadowing: true
+    enable-all: true
+    disable:
+      - fieldalignment
+  ireturn:
+    allow:
+      - error
+      - generic
+  lll:
+    line-length: 100
+  misspell:
+    locale: US
+  nolintlint:
+    allow-unused: false
+    allow-leading-space: false
+    require-explanation: true
+    require-specific: true
+
+linters:
+  disable-all: true
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - cyclop
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - execinquery
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - gosimple
+    - grouper
+    - govet
+    - importas
+    - interfacebloat
+    - ineffassign
+    - ireturn
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - paralleltest
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - stylecheck
+    - tagalign
+    - tenv
+    - testableexamples
+    - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+    - zerologlint
+  # not enabled:
+  # - deadcode  # deprecated
+  # - depguard  # We have no restrictions on dependencies.
+  # - exhaustivestruct  # deprecated
+  # - exhaustruct  # This doesn't make sense to check for in most cases.
+  # - forbidigo  # nothing to forbid
+  # - gci  # prefer goimports
+  # - gochecknoglobals  # I don't think globals should be universally disallowed.
+  # - gochecknoinits  # I don't think init should be universally disallowed.
+  # - goerr113  # I think it's ok to include info in errors without defining a new type.
+  # - goheader  # no need for a header
+  # - golint  # deprecated
+  # - gomnd  # prefer goconst
+  # - ifshort  # deprecated
+  # - interfacer  # deprecated
+  # - maligned  # deprecated
+  # - nonamedreturns  # disagree
+  # - nosnakecase  # deprecated
+  # - scopelint  # deprecated
+  # - structcheck  # deprecated
+  # - tagliatelle  # We have to use the JSON fields from the API.
+  # - varcheck  # deprecated
+  # - varnamelen  # I don't think this matters.
+  # - wrapcheck  # I think this should only happen for public functions.
+  # - wsl  # not a fan

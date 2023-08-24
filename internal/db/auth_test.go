@@ -1,32 +1,31 @@
-package db
+package db_test
 
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/cobaltspeech/log/pkg/testinglog"
 	"github.com/jackc/pgx/v5"
+	"github.com/kylrth/disco-bouncer/internal/db"
 	"github.com/pashagolub/pgxmock/v2"
 )
 
-// AnyBcrypt satisfies pgxmock.Argument
+// AnyBcrypt satisfies pgxmock.Argument.
 type AnyBcrypt struct{}
 
-// Match matches any string that starts with "$2a$10$"
+// Match matches any string that starts with "$2a$10$".
 func (a AnyBcrypt) Match(v interface{}) bool {
 	switch val := v.(type) {
 	case string:
-		fmt.Println(val)
 		return strings.HasPrefix(val, "$2a$10$")
 	default:
 		return false
 	}
 }
 
-func TestAdminTable(t *testing.T) {
+func TestAdminTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequential calls
 	t.Parallel()
 
 	mockDB, err := pgxmock.NewPool()
@@ -36,7 +35,7 @@ func TestAdminTable(t *testing.T) {
 	defer mockDB.Close()
 
 	logger := testinglog.NewConvenientLogger(t)
-	table := &AdminTable{logger: logger, pool: mockDB}
+	table := db.NewAdminTable(logger, mockDB)
 	ctx := context.Background()
 
 	// create admin John and check password
@@ -113,7 +112,7 @@ func TestAdminTable(t *testing.T) {
 		WithArgs("stephen", AnyBcrypt{}).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
 	err = table.ChangePassword(ctx, "stephen", "password")
-	if !errors.Is(err, ErrNoUser) {
+	if !errors.Is(err, db.ErrNoUser) {
 		t.Errorf("unexpected error from ChangePassword: %v", err)
 	}
 
@@ -122,7 +121,7 @@ func TestAdminTable(t *testing.T) {
 		WithArgs("stephen").
 		WillReturnResult(pgxmock.NewResult("DELETE", 0))
 	err = table.DeleteAdmin(ctx, "stephen")
-	if !errors.Is(err, ErrNoUser) {
+	if !errors.Is(err, db.ErrNoUser) {
 		t.Errorf("unexpected error from DeleteAdmin: %v", err)
 	}
 

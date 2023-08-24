@@ -6,17 +6,16 @@ import (
 
 	"github.com/cobaltspeech/log"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // UserTable represents the table of users that the bouncer will accept into the Discord server.
 type UserTable struct {
 	logger log.Logger
-	pool   pgxIface
+	pool   PgxIface
 }
 
 // NewUserTable creates a new UserTable backed by a Postgres connection pool.
-func NewUserTable(l log.Logger, pool *pgxpool.Pool) *UserTable {
+func NewUserTable(l log.Logger, pool PgxIface) *UserTable {
 	out := UserTable{
 		logger: l,
 		pool:   pool,

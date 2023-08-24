@@ -7,7 +7,6 @@ import (
 
 	"github.com/cobaltspeech/log"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,11 +14,11 @@ import (
 // hashing, so all `pass` method arguments are expected to be plaintext.
 type AdminTable struct {
 	logger log.Logger
-	pool   pgxIface
+	pool   PgxIface
 }
 
 // NewAdminTable creates a new AdminTable backed by a Postgres connection pool.
-func NewAdminTable(l log.Logger, pool *pgxpool.Pool) *AdminTable {
+func NewAdminTable(l log.Logger, pool PgxIface) *AdminTable {
 	out := AdminTable{
 		logger: l,
 		pool:   pool,

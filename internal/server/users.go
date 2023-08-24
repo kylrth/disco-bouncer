@@ -47,6 +47,7 @@ func GetUser(table *db.UserTable) fiber.Handler {
 			if errors.Is(err, db.ErrNoUser) {
 				return c.Status(http.StatusNotFound).SendString("User not found")
 			}
+
 			return serverError(c, fmt.Sprintf("Database error: %v", err))
 		}
 
@@ -81,7 +82,7 @@ func UpdateUser(table *db.UserTable) fiber.Handler {
 		}
 
 		var user db.User
-		if err := c.BodyParser(&user); err != nil {
+		if err = c.BodyParser(&user); err != nil {
 			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
 
@@ -92,6 +93,7 @@ func UpdateUser(table *db.UserTable) fiber.Handler {
 			if errors.Is(err, db.ErrNoUser) {
 				return c.Status(http.StatusNotFound).SendString("User not found")
 			}
+
 			return serverError(c, fmt.Sprintf("Database error: %v", err))
 		}
 
@@ -112,6 +114,7 @@ func DeleteUser(table *db.UserTable) fiber.Handler {
 			if errors.Is(err, db.ErrNoUser) {
 				return c.Status(http.StatusNotFound).SendString("User not found")
 			}
+
 			return serverError(c, fmt.Sprintf("Database error: %v", err))
 		}
 

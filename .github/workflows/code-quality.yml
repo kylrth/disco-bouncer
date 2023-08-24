@@ -1,0 +1,31 @@
+name: code quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+
+    - name: ensure go mod tidy
+      run: go mod tidy && git diff --exit-code go.mod go.sum
+
+    - name: get linter version
+      id: linter-version
+      run: echo "version=$(grep 'LINTER_VERSION :=' Makefile | awk '{print $3}')" > $GITHUB_OUTPUT
+
+    - name: lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v${{ steps.linter-version.outputs.version }}
+        args: --timeout=15m

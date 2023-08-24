@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/cobaltspeech/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 
@@ -17,11 +19,14 @@ import (
 func withLAndDB(f func(log.Logger, *pgxpool.Pool, []string) error) func(*cobra.Command, []string) {
 	return withLogger(func(l log.Logger, args []string) error {
 		pgURI := os.Getenv("DATABASE_URL")
-		db.ApplyMigrations(pgURI)
+		err := db.ApplyMigrations(pgURI)
+		if err != nil {
+			return fmt.Errorf("apply database migrations: %w", err)
+		}
 
 		pool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 		if err != nil {
-			return err
+			return fmt.Errorf("connect to database: %w", err)
 		}
 		defer pool.Close()
 

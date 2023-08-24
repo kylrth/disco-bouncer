@@ -56,7 +56,10 @@ func Login(table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
 			return serverError(c, "Failed to initiate session")
 		}
 		sess.Set("username", input.Username)
-		sess.Save()
+		err = sess.Save()
+		if err != nil {
+			return serverError(c, "Failed to save session")
+		}
 
 		return c.SendString("Login successful")
 	}
@@ -77,7 +80,10 @@ func Logout(l log.Logger, sessionStore *session.Store) fiber.Handler {
 			username = "unknown"
 		}
 
-		sess.Destroy()
+		err = sess.Destroy()
+		if err != nil {
+			return serverError(c, "Failed to remove session")
+		}
 
 		l.Debug("msg", "logged out", "user", username)
 
@@ -117,6 +123,7 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 			if errors.Is(err, bcrypt.ErrPasswordTooLong) {
 				return c.Status(http.StatusBadRequest).SendString("Password too long")
 			}
+
 			return serverError(c, "Failed to save password")
 		}
 

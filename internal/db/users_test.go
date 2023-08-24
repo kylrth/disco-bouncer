@@ -1,4 +1,4 @@
-package db
+package db_test
 
 import (
 	"context"
@@ -9,10 +9,19 @@ import (
 	"github.com/cobaltspeech/log/pkg/testinglog"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jackc/pgx/v5"
+	"github.com/kylrth/disco-bouncer/internal/db"
 	"github.com/pashagolub/pgxmock/v2"
 )
 
-func TestUserTable(t *testing.T) {
+const userFields = "name, finish_year, professor, ta, student_leadership, alumni_board"
+
+var userColumns = []string{"id"}
+
+func init() {
+	userColumns = append(userColumns, strings.Split(userFields, ", ")...)
+}
+
+func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequential calls
 	t.Parallel()
 
 	mockDB, err := pgxmock.NewPool()
@@ -22,26 +31,22 @@ func TestUserTable(t *testing.T) {
 	defer mockDB.Close()
 
 	logger := testinglog.NewConvenientLogger(t)
-	table := &UserTable{logger, mockDB}
+	table := db.NewUserTable(logger, mockDB)
 	ctx := context.Background()
 
-	john := User{
+	john := db.User{
 		Name:        "John Doe",
 		FinishYear:  2019,
 		AlumniBoard: true,
 	}
-	stephen := User{
+	stephen := db.User{
 		Name:       "Stephen Wolfram",
 		FinishYear: 0,
 		Professor:  true,
 	}
 
 	// create user John and check data
-	mockDB.ExpectQuery("INSERT INTO users").
-		WithArgs(
-			john.Name, john.FinishYear, john.Professor, john.TA, john.StudentLeadership,
-			john.AlumniBoard,
-		).
+	withUserArgs(&john, mockDB.ExpectQuery("INSERT INTO users"), false).
 		WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(1))
 	john.ID, err = table.CreateUser(ctx, &john)
 	if err != nil {
@@ -51,14 +56,7 @@ func TestUserTable(t *testing.T) {
 		t.Errorf("wrong ID for John: %d", john.ID)
 	}
 
-	mockDB.ExpectQuery("SELECT " + userFields + " FROM users").
-		WithArgs(1).
-		WillReturnRows(pgxmock.NewRows(strings.Split(userFields, ", ")).
-			AddRow(
-				john.Name, john.FinishYear, john.Professor, john.TA, john.StudentLeadership,
-				john.AlumniBoard,
-			),
-		)
+	willReturnUsers(mockDB.ExpectQuery("SELECT "+userFields+" FROM users").WithArgs(1), false, &john)
 	newJohn, err := table.GetUser(ctx, john.ID)
 	if err != nil {
 		t.Errorf("error from GetUser: %v", err)
@@ -73,7 +71,7 @@ func TestUserTable(t *testing.T) {
 		WithArgs(2).
 		WillReturnError(pgx.ErrNoRows)
 	_, err = table.GetUser(ctx, 2)
-	if !errors.Is(err, ErrNoUser) {
+	if !errors.Is(err, db.ErrNoUser) {
 		t.Errorf("unexpected error from GetUser: %v", err)
 	}
 
@@ -92,48 +90,27 @@ func TestUserTable(t *testing.T) {
 		t.Errorf("wrong ID for Stephen: %d", stephen.ID)
 	}
 
-	mockDB.ExpectQuery("SELECT id, " + userFields + " FROM users").
-		WillReturnRows(pgxmock.NewRows(append([]string{"id"}, strings.Split(userFields, ", ")...)).
-			AddRows(
-				[]any{
-					john.ID, john.Name, john.FinishYear, john.Professor, john.TA,
-					john.StudentLeadership, john.AlumniBoard,
-				},
-				[]any{
-					stephen.ID, stephen.Name, stephen.FinishYear, stephen.Professor, stephen.TA,
-					stephen.StudentLeadership, stephen.AlumniBoard,
-				},
-			),
-		)
+	willReturnUsers(mockDB.ExpectQuery("SELECT id, "+userFields+" FROM users"), true, &john, &stephen)
 	users, err := table.GetUsers(ctx)
 	if err != nil {
 		t.Errorf("unexpected error from GetUsers: %v", err)
 	}
-	diff = cmp.Diff([]*User{&john, &stephen}, users)
+	diff = cmp.Diff([]*db.User{&john, &stephen}, users)
 	if diff != "" {
 		t.Error("unexpected users (-want +got):\n" + diff)
 	}
 
 	// modify Stephen and check
 	stephen.Name = "Stephen King"
-	mockDB.ExpectExec("UPDATE users").
-		WithArgs(
-			stephen.ID, stephen.Name, stephen.FinishYear, stephen.Professor, stephen.TA,
-			stephen.StudentLeadership, stephen.AlumniBoard,
-		).WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+	withUserArgs(&stephen, mockDB.ExpectExec("UPDATE users"), true).
+		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 	err = table.UpdateUser(ctx, &stephen)
 	if err != nil {
 		t.Errorf("unexpected error from UpdateUser: %v", err)
 	}
 
-	mockDB.ExpectQuery("SELECT " + userFields + " FROM users").
-		WithArgs(stephen.ID).
-		WillReturnRows(pgxmock.NewRows(strings.Split(userFields, ", ")).
-			AddRow(
-				stephen.Name, stephen.FinishYear, stephen.Professor, stephen.TA,
-				stephen.StudentLeadership, stephen.AlumniBoard,
-			),
-		)
+	willReturnUsers(mockDB.ExpectQuery("SELECT "+userFields+" FROM users").
+		WithArgs(stephen.ID), false, &stephen)
 	newUser, err := table.GetUser(ctx, stephen.ID)
 	if err != nil {
 		t.Errorf("unexpected error from GetUser: %v", err)
@@ -145,13 +122,10 @@ func TestUserTable(t *testing.T) {
 
 	// update nonexistent user
 	stephen.ID = 4
-	mockDB.ExpectExec("UPDATE users").
-		WithArgs(
-			stephen.ID, stephen.Name, stephen.FinishYear, stephen.Professor, stephen.TA,
-			stephen.StudentLeadership, stephen.AlumniBoard,
-		).WillReturnResult(pgxmock.NewResult("UPDATE", 0))
+	withUserArgs(&stephen, mockDB.ExpectExec("UPDATE users"), true).
+		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
 	err = table.UpdateUser(ctx, &stephen)
-	if !errors.Is(err, ErrNoUser) {
+	if !errors.Is(err, db.ErrNoUser) {
 		t.Errorf("unexpected error from UpdateUser: %v", err)
 	}
 	stephen.ID = 2
@@ -161,7 +135,7 @@ func TestUserTable(t *testing.T) {
 		WithArgs(4).
 		WillReturnResult(pgxmock.NewResult("DELETE", 0))
 	err = table.DeleteUser(ctx, 4)
-	if !errors.Is(err, ErrNoUser) {
+	if !errors.Is(err, db.ErrNoUser) {
 		t.Errorf("unexpected error from DeleteUser: %v", err)
 	}
 
@@ -178,7 +152,7 @@ func TestUserTable(t *testing.T) {
 		WithArgs(john.ID).
 		WillReturnError(pgx.ErrNoRows)
 	_, err = table.GetUser(ctx, john.ID)
-	if !errors.Is(err, ErrNoUser) {
+	if !errors.Is(err, db.ErrNoUser) {
 		t.Errorf("unexpected error from GetUser: %v", err)
 	}
 
@@ -186,4 +160,39 @@ func TestUserTable(t *testing.T) {
 		t.Errorf("unfulfilled DB expectations: %v", err)
 	}
 	logger.Done()
+}
+
+type withArgser[T any] interface {
+	WithArgs(args ...interface{}) T
+}
+
+func withUserArgs[T withArgser[T]](u *db.User, mdb T, withID bool) T {
+	args := make([]interface{}, 0, 7)
+	if withID {
+		args = append(args, u.ID)
+	}
+	args = append(args, u.Name, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard)
+
+	return mdb.WithArgs(args...)
+}
+
+func willReturnUsers(mdb *pgxmock.ExpectedQuery, withID bool, users ...*db.User) {
+	rows := make([][]any, len(users))
+	for i, u := range users {
+		args := make([]any, 0, 7)
+		if withID {
+			args = append(args, u.ID)
+		}
+		args = append(args,
+			u.Name, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard)
+
+		rows[i] = args
+	}
+
+	columns := userColumns
+	if !withID {
+		columns = columns[1:]
+	}
+
+	mdb.WillReturnRows(pgxmock.NewRows(columns).AddRows(rows...))
 }

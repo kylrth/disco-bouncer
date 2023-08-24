@@ -13,6 +13,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cobaltspeech/log/pkg/testinglog"
 	"github.com/gofiber/fiber/v2"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -55,7 +56,10 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("could not start postgres instance: %v", err)
 	}
-	resource.Expire(hardTimeout)
+	err = resource.Expire(hardTimeout)
+	if err != nil {
+		log.Fatalf("could not set expiration on postgres instance: %v", err)
+	}
 
 	// connect to Postgres
 	pool.MaxWait = hardTimeout * time.Second
@@ -63,11 +67,12 @@ func TestMain(m *testing.M) {
 		pgUser, pgPass, resource.GetHostPort("5432/tcp"), pgUser)
 	if err = pool.Retry(func() error {
 		// apply migrations to set up tables
-		err := db.ApplyMigrations(pgURI)
-		if err != nil && !strings.Contains(err.Error(), "connection reset by peer") {
-			return backoff.Permanent(err)
+		newErr := db.ApplyMigrations(pgURI)
+		if newErr != nil && !strings.Contains(newErr.Error(), "connection reset by peer") {
+			return backoff.Permanent(newErr)
 		}
-		return err
+
+		return newErr
 	}); err != nil {
 		log.Fatalf("could not connect to postgres instance: %v", err)
 	}
@@ -88,33 +93,38 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestAll(t *testing.T) {
+//nolint:paralleltest // This test uses a database.
+func TestAll(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequential operations
 	l := testinglog.NewConvenientLogger(t)
 	defer l.Done()
 
 	const testUser = "test"
 	const testPass = "testtest"
 
-	// create a new admin user
-	db.NewAdminTable(l, dbPool).AddAdmin(context.Background(), testUser, testPass)
+	ctx := context.Background()
 
-	const addr = ":8321"
+	// create a new admin user
+	err := db.NewAdminTable(l, dbPool).AddAdmin(ctx, testUser, testPass)
+	if err != nil {
+		t.Fatalf("failed to create admin user: %v", err)
+	}
 
 	// start server
 	app := fiber.New()
 	server.AddAuthHandlers(l, app, dbPool)
 	server.AddCRUDHandlers(l, app, dbPool)
 
+	const addr = ":8321"
 	go func() {
-		err := app.Listen(addr)
-		if err != nil {
-			l.Error("msg", "error from server listener", "error", err)
+		serveErr := app.Listen(addr)
+		if serveErr != nil {
+			l.Error("msg", "error from server listener", "error", serveErr)
 		}
 	}()
 	defer func() {
-		err := app.ShutdownWithTimeout(5 * time.Second)
-		if err != nil {
-			t.Errorf("error shutting down server: %v", err)
+		shutdownErr := app.ShutdownWithTimeout(5 * time.Second)
+		if shutdownErr != nil {
+			t.Errorf("error shutting down server: %v", shutdownErr)
 		}
 	}()
 
@@ -124,28 +134,28 @@ func TestAll(t *testing.T) {
 		t.Fatalf("failed to create client: %v", err)
 	}
 
-	err = c.Admin.Login(testUser, testPass)
+	err = c.Admin.Login(ctx, testUser, testPass)
 	if err != nil {
 		t.Fatalf("failed to login: %v", err)
 	}
 
 	newPass := "newPass1"
-	err = c.Admin.ChangePassword(newPass)
+	err = c.Admin.ChangePassword(ctx, newPass)
 	if err != nil {
 		t.Fatalf("failed to change password: %v", err)
 	}
 
-	err = c.Admin.Logout()
+	err = c.Admin.Logout(ctx)
 	if err != nil {
 		t.Fatalf("failed to logout: %v", err)
 	}
 
-	err = c.Admin.Login(testUser, newPass)
+	err = c.Admin.Login(ctx, testUser, newPass)
 	if err != nil {
 		t.Fatalf("failed to login with new password: %v", err)
 	}
 
-	users, err := c.Users.GetAllUsers()
+	users, err := c.Users.GetAllUsers(ctx)
 	if err != nil {
 		t.Fatalf("failed to get users: %v", err)
 	}
@@ -162,22 +172,22 @@ func TestAll(t *testing.T) {
 		FinishYear:  2019,
 		AlumniBoard: true,
 	}
-	u1.ID, err = c.Users.CreateUser(&u1)
+	u1.ID, err = c.Users.CreateUser(ctx, &u1)
 	if err != nil {
 		t.Fatalf("failed to create user1: %v", err)
 	}
-	u2.ID, err = c.Users.CreateUser(&u2)
+	u2.ID, err = c.Users.CreateUser(ctx, &u2)
 	if err != nil {
 		t.Fatalf("failed to create user2: %v", err)
 	}
 
 	u1.TA = true
-	err = c.Users.UpdateUser(&u1)
+	err = c.Users.UpdateUser(ctx, &u1)
 	if err != nil {
 		t.Fatalf("failed to update user1: %v", err)
 	}
 
-	users, err = c.Users.GetAllUsers()
+	users, err = c.Users.GetAllUsers(ctx)
 	if err != nil {
 		t.Errorf("failed to get users: %v", err)
 	}
@@ -189,12 +199,12 @@ func TestAll(t *testing.T) {
 		t.Error("unexpected users (-want +got):\n" + diff)
 	}
 
-	err = c.Users.DeleteUser(u2.ID)
+	err = c.Users.DeleteUser(ctx, u2.ID)
 	if err != nil {
 		t.Fatalf("failed to delete user2: %v", err)
 	}
 
-	newU1, err := c.Users.GetUser(u1.ID)
+	newU1, err := c.Users.GetUser(ctx, u1.ID)
 	if err != nil {
 		t.Errorf("failed to get user: %v", err)
 	}
@@ -202,7 +212,7 @@ func TestAll(t *testing.T) {
 		t.Error("unexpected users (-want +got):\n" + diff)
 	}
 
-	users, err = c.Users.GetAllUsers()
+	users, err = c.Users.GetAllUsers(ctx)
 	if err != nil {
 		t.Errorf("failed to get users: %v", err)
 	}

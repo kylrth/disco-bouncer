@@ -18,12 +18,6 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Short: "Avoid Panic! at the Disco(rd)",
-	Run:   noRun,
-}
-
-func noRun(cmd *cobra.Command, args []string) {
-	fmt.Fprintf(os.Stderr, "Run the `help` subcommand for usage.")
-	os.Exit(2)
 }
 
 var verbosity int

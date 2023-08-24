@@ -13,7 +13,6 @@ import (
 var adminCmd = &cobra.Command{
 	Use:   "admin",
 	Short: "Manage admins",
-	Run:   noRun,
 }
 
 func init() {

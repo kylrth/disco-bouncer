@@ -3,6 +3,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,13 +63,17 @@ func handleNotOK(resp *http.Response) error {
 	return errors.New(string(errMsg))
 }
 
-func (c *Client) get(p string) (*http.Response, error) {
+func (c *Client) get(ctx context.Context, p string) (*http.Response, error) {
 	p, err := url.JoinPath(c.baseURL, p)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.client.Get(p)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return resp, err
 	}
@@ -90,8 +95,8 @@ func unmarshalBody(resp *http.Response, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-func (c *Client) getJSON(p string, v interface{}) error {
-	resp, err := c.get(p)
+func (c *Client) getJSON(ctx context.Context, p string, v interface{}) error {
+	resp, err := c.get(ctx, p)
 	if err != nil {
 		return err
 	}
@@ -99,13 +104,20 @@ func (c *Client) getJSON(p string, v interface{}) error {
 	return unmarshalBody(resp, v)
 }
 
-func (c *Client) post(p, contentType string, body io.Reader) (*http.Response, error) {
+func (c *Client) post(
+	ctx context.Context, p, contentType string, body io.Reader,
+) (*http.Response, error) {
 	p, err := url.JoinPath(c.baseURL, p)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.client.Post(p, contentType, body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", contentType)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return resp, err
 	}
@@ -117,17 +129,17 @@ func (c *Client) post(p, contentType string, body io.Reader) (*http.Response, er
 	return resp, nil
 }
 
-func (c *Client) postJSON(p string, data interface{}) (*http.Response, error) {
+func (c *Client) postJSON(ctx context.Context, p string, data interface{}) (*http.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.post(p, "application/json", bytes.NewBuffer(body))
+	return c.post(ctx, p, "application/json", bytes.NewBuffer(body))
 }
 
-func (c *Client) postJSONrecvJSON(p string, data interface{}, v interface{}) error {
-	resp, err := c.postJSON(p, data)
+func (c *Client) postJSONrecvJSON(ctx context.Context, p string, data, v interface{}) error {
+	resp, err := c.postJSON(ctx, p, data)
 	if err != nil {
 		return err
 	}
@@ -135,7 +147,7 @@ func (c *Client) postJSONrecvJSON(p string, data interface{}, v interface{}) err
 	return unmarshalBody(resp, v)
 }
 
-func (c *Client) putJSONrecvJSON(p string, data interface{}, v interface{}) error {
+func (c *Client) putJSONrecvJSON(ctx context.Context, p string, data, v interface{}) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -146,7 +158,7 @@ func (c *Client) putJSONrecvJSON(p string, data interface{}, v interface{}) erro
 		return err
 	}
 
-	req, err := http.NewRequest("PUT", p, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, p, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -164,13 +176,13 @@ func (c *Client) putJSONrecvJSON(p string, data interface{}, v interface{}) erro
 	return unmarshalBody(resp, v)
 }
 
-func (c *Client) delete(p string) error {
+func (c *Client) delete(ctx context.Context, p string) error {
 	p, err := url.JoinPath(c.baseURL, p)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("DELETE", p, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, p, http.NoBody)
 	if err != nil {
 		return err
 	}
