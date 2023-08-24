@@ -1,0 +1,13 @@
+debug {"msg":"stored new admin","user":"test"}
+debug {"msg":"successful password check","user":"test"}
+debug {"msg":"password updated","user":"test"}
+debug {"msg":"logged out","user":"test"}
+debug {"msg":"successful password check","user":"test"}
+debug {"msg":"got all users","count":"0"}
+debug {"msg":"created new user","id":"1"}
+debug {"msg":"created new user","id":"2"}
+debug {"msg":"updated user","id":"1"}
+debug {"msg":"got all users","count":"2"}
+debug {"msg":"deleted user","id":"2"}
+debug {"msg":"found user info","id":"1"}
+debug {"msg":"got all users","count":"1"}

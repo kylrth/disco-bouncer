@@ -1,0 +1,9 @@
+debug {"msg":"stored new admin","user":"john"}
+debug {"msg":"successful password check","user":"john"}
+info  {"msg":"checked password for nonexistent user","user":"stephen"}
+debug {"msg":"password updated","user":"john"}
+debug {"msg":"unsuccessful password check","user":"john"}
+debug {"msg":"successful password check","user":"john"}
+info  {"msg":"no user found to update password","user":"stephen"}
+info  {"msg":"no user found to delete","user":"stephen"}
+debug {"msg":"deleted admin","user":"john"}
