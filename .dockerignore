@@ -1,0 +1,8 @@
+.github/
+bin/
+.gitignore
+.golangci.yml
+Dockerfile
+LICENSE
+Makefile
+README.md

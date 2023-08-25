@@ -18,6 +18,23 @@ $(LINTER):
 lint: $(LINTER)
 	$(LINTER) run --deadline=2m
 
+## TEST
+
 .PHONY: test
 test:
 	go test -race -cover ./...
+
+## BUILD
+
+GO_FILES = $(shell find . -type f -name '*.go')
+
+$(BINDIR)/bouncer: $(GO_FILES)
+	mkdir -p $(BINDIR)
+	go build -o $(BINDIR)/bouncer ./cmd
+
+.PHONY: build
+build: $(BINDIR)/bouncer
+
+.PHONY: docker
+docker:
+	docker build -t kylrth/disco-bouncer:latest .
