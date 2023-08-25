@@ -2,6 +2,7 @@ package db
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -11,7 +12,7 @@ import (
 //go:embed migrations
 var migrationsFS embed.FS
 
-// ApplyMigrations applies all migrations to the database at dbURI.
+// ApplyMigrations ensures all migrations are applied to the database at dbURI.
 func ApplyMigrations(dbURI string) error {
 	d, err := iofs.New(migrationsFS, "migrations")
 	if err != nil {
@@ -23,5 +24,10 @@ func ApplyMigrations(dbURI string) error {
 		return fmt.Errorf("connect: %w", err)
 	}
 
-	return m.Up()
+	err = m.Up()
+	if errors.Is(err, migrate.ErrNoChange) {
+		return nil
+	}
+
+	return err
 }
