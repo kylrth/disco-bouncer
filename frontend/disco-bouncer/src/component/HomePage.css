@@ -1,0 +1,57 @@
+.top-navbar {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.top-navbar button {
+    background-color: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.student-table-container {
+    margin-top: 20px;
+    width: 100%;
+    overflow: auto;
+  }
+  
+  .student-table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid #ddd;
+  }
+  
+  .student-table th,
+  .student-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .student-table th {
+    background-color: #f2f2f2;
+  }
+  
+  .student-table th:last-child,
+  .student-table td:last-child {
+    text-align: center;
+  }
+  
+  .student-table button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 10px; /* Adjust spacing between buttons */
+    margin-top: 20px; /* Add some space between the table and buttons */
+  }

@@ -1,0 +1,178 @@
+# copy the contents of this file into https://editor.swagger.io/ to see a nice api description
+# 
+swagger: '2.0'
+info:
+  title: Your API Title
+  description: API documentation for your server package
+  version: '1.0'
+basePath: /
+schemes:
+  - http
+paths:
+  /login:
+    post:
+      summary: User login
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+      responses:
+        '200':
+          description: Login successful
+          schema:
+            type: string
+        '400':
+          description: Failed to parse body or invalid credentials
+          schema:
+            type: string
+        '500':
+          description: Internal Server Error
+          schema:
+            type: string
+  /logout:
+    post:
+      summary: User logout
+      responses:
+        '200':
+          description: Logout successful
+          schema:
+            type: string
+        '500':
+          description: Internal Server Error
+          schema:
+            type: string
+  /admin/pass:
+    post:
+      summary: Change admin password
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+      responses:
+        '200':
+          description: Password updated successfully
+          schema:
+            type: string
+        '400':
+          description: Failed to parse body or password too short
+          schema:
+            type: string
+        '500':
+          description: Failed to save password or Internal Server Error
+          schema:
+            type: string
+  /api/users:
+    get:
+      summary: Get all users
+      responses:
+        "200":
+          description: Successful response containing an array of users
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/User"
+        "500":
+          description: Internal Server Error
+    post:
+      summary: Create a new user
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: Successful response containing the created user
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: Bad request or invalid data
+        "500":
+          description: Internal Server Error
+  "/api/users/{id}":
+    get:
+      summary: Get user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+      responses:
+        "200":
+          description: Successful response containing the user information
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: Invalid ID or bad request
+        "404":
+          description: User not found
+        "500":
+          description: Internal Server Error
+    put:
+      summary: Update user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: Successful response containing the updated user information
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: Invalid ID, bad request, or invalid data
+        "404":
+          description: User not found
+        "500":
+          description: Internal Server Error
+    delete:
+      summary: Delete user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+      responses:
+        "200":
+          description: User deleted successfully
+        "400":
+          description: Invalid ID or bad request
+        "404":
+          description: User not found
+        "500":
+          description: Internal Server Error
+definitions:
+  User:
+    type: object
+    properties:
+      ID:
+        type: integer
+      Name:
+        type: string
+      Age:
+        type: integer
