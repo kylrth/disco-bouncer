@@ -50,7 +50,7 @@ func (s *AdminService) Login(ctx context.Context, user, pass string) error {
 func (s *AdminService) Logout(ctx context.Context) error {
 	const p = "/logout"
 
-	resp, err := s.c.post(ctx, p, "", nil)
+	resp, err := s.c.post(ctx, p, "", http.NoBody)
 	if err != nil {
 		return err
 	}
