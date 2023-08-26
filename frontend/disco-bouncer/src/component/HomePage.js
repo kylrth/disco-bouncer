@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import Login from './Login';
+import { Link, useNavigate } from 'react-router-dom';
 import './HomePage.css';
 
 
-function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [students, setStudents] = useState([]);
+function HomePage({ isLoggedIn, username }) {
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
+  const [students, setStudents] = useState([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [name, setName] = useState('');
+  const [graduationYear, setGraduationYear] = useState('');
+  const [selectedRoles, setSelectedRoles] = useState([]);
 
   const handleLogout = async () => {
     try {
       const response = await axios.post('https://discobouncer.kylrth.com/logout'); // Make a POST request to /logout
       if (response.status === 200) {
-        setIsLoggedIn(false);
+        isLoggedIn = false;
+        navigate('/login');
       } else {
         // Handle error case if needed
       }
@@ -29,7 +30,7 @@ function HomePage() {
   useEffect(() => {
     // Fetch students data from API and set it to the state
     // Example API call (replace with your actual API endpoint):
-    fetch('https://your-api-url.com/students')
+    fetch('https://discobouncer.kylrth.com/api/users')
       .then(response => response.json())
       .then(data => setStudents(data))
       .catch(error => console.error('Error fetching students:', error));
@@ -56,40 +57,135 @@ function HomePage() {
       </tr>
     ));
   };
+  
+  const handleAddStudent = () => {
+    setIsFormVisible(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsFormVisible(false);
+  };
+  
+  const handleRoleChange = (role) => {
+    if (selectedRoles.includes(role)) {
+      setSelectedRoles(selectedRoles.filter(r => r !== role));
+    } else {
+      setSelectedRoles([...selectedRoles, role]);
+    }
+  };
+
+  const handleSubmitForm = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post('https://discobouncer.kylrth.com/api/users', {
+        name,
+        graduationYear,
+        roles: selectedRoles
+      });
+
+      if (response.status === 200) {
+        // Refresh the student list or perform any other required action
+        setIsFormVisible(false);
+      } else {
+        // Handle error case if needed
+      }
+    } catch (error) {
+      // Handle error case if needed
+    }
+  };
 
   return (
     <div className="home-page">
-    {isLoggedIn ? (
-        <div>
-        <nav className="top-navbar">
-            <Link to="/Login" className="top-navbar-button" onClick={handleLogout}>Logout</Link>
-            <Link to="/manage-user" className="top-navbar-button">Change Password</Link>
-        </nav>
-        <div className="button-row">
-            <button className="student-table">Bulk Upload Students</button>
-            <button className="student-table">Add a Single Student</button>
-            <button className="student-table">Bulk Decrypt Names</button>
-            <button className="student-table">Single Decrypt Name</button>
+      <nav className="top-navbar">
+        <p className='welcome'>Welcome, {username}</p>
+        <div className="nav-buttons">
+          <Link to="/manage-user" className="top-navbar-link">Change Password</Link>
+          <Link to="/logout" className="top-navbar-link" onClick={handleLogout}>Logout</Link>
         </div>
-        <div className="student-table-container">
-            <table className="student-table">
-            <thead>
-                <tr>
-                <th>Name/ID</th>
-                <th>Graduation Year</th>
-                <th>Roles</th>
-                <th>Edit/Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                {renderStudents()}
-            </tbody>
-            </table>
+      </nav>
+      <div className="button-row">
+        <button className="student-table">Bulk Upload Students</button>
+        <button className="student-table" onClick={handleAddStudent}>Add a Single Student</button>
+        <button className="student-table">Bulk Decrypt Names</button>
+        <button className="student-table">Single Decrypt Name</button>
+      </div>
+      
+      {isFormVisible && (
+        <div className="overlay">
+          <div className="student-form">
+            <h2>Add a Single Student</h2>
+            <form onSubmit={handleSubmitForm}>
+              <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Graduation Year (YYYY)"
+                value={graduationYear}
+                onChange={(e) => setGraduationYear(e.target.value)}
+              />
+              <div className='add-student-roles'>
+                <label>Roles:</label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes('Professor')}
+                    onChange={() => handleRoleChange('Professor')}
+                  />
+                  Professor
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes('TA')}
+                    onChange={() => handleRoleChange('TA')}
+                  />
+                  TA
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes('Student Leadership')}
+                    onChange={() => handleRoleChange('Student Leadership')}
+                  />
+                  Student Leadership
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes('Alumni Board')}
+                    onChange={() => handleRoleChange('Alumni Board')}
+                  />
+                  Alumni Board
+                </label>
+              </div>
+              <button type="submit">Submit</button>
+              <button type="button" onClick={handleCloseForm}>
+                Cancel
+              </button>
+            </form>
+          </div>
         </div>
-        </div>
-    ) : (
-        <Login onLogin={handleLogin} />
-    )}
+      )}
+      <div className="student-table-container">
+        <table className="student-table">
+          <thead>
+            <tr>
+              <th>Name/ID</th>
+              <th>Graduation Year</th>
+              <th>Roles</th>
+              <th>Edit/Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {renderStudents()}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

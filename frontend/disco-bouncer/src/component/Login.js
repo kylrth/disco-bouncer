@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
 
 function Login({ onLogin }) {
+  const navigate = useNavigate();
+
   const [input_username, setUsername] = useState('');
   const [input_password, setPassword] = useState('');
 
@@ -15,7 +18,8 @@ function Login({ onLogin }) {
   
       if (response.status === 200) {
         // Call the callback function passed as prop
-        onLogin();
+        onLogin(input_username);
+        navigate('/home');
       } else {
         // Handle error case if needed
       }

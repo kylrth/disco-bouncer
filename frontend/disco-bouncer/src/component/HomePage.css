@@ -3,15 +3,38 @@
     color: white;
     padding: 10px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.top-navbar button {
-    background-color: transparent;
-    border: none;
-    color: white;
-    cursor: pointer;
-    margin-left: 10px;
+.welcome {
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-family: "Goudy Bookletter 1911", sans-serif;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.top-navbar-link{
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: 10px;
+  font-family: "Goudy Bookletter 1911", sans-serif;
+  font-weight: normal;
+  font-size: 14;
+}
+
+.top-navbar-link:hover {
+  color: lightblue;
 }
 
 .student-table-container {
@@ -54,4 +77,77 @@
     display: flex;
     gap: 10px; /* Adjust spacing between buttons */
     margin-top: 20px; /* Add some space between the table and buttons */
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+  }
+  
+  .student-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+  }
+  
+  .student-form h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .student-form form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .student-form input[type="text"] {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+
+  .add-student-roles {
+    display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  }
+  
+  .student-form label {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .student-form label input[type="checkbox"] {
+    margin-right: 5px;
+  }
+  
+  .student-form button {
+    padding: 10px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .student-form button[type="submit"] {
+    background-color: #007bff;
+    color: #ffffff;
+  }
+  
+  .student-form button[type="button"] {
+    background-color: #ccc;
+    color: #ffffff;
   }
