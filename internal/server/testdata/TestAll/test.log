@@ -2,22 +2,22 @@ debug {"msg":"stored new admin","user":"test"}
 debug {"msg":"successful password check","user":"test"}
 debug {"msg":"successful password check","user":"test"}
 debug {"msg":"password updated","user":"test"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"POST /admin/pass"}
+debug {"msg":"authenticated access","user":"test","endpoint":"POST /admin/pass"}
 debug {"msg":"logged out","user":"test"}
 debug {"msg":"successful password check","user":"test"}
 debug {"msg":"got all users","count":"0"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
 debug {"msg":"created new user","id":"1"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"POST /api/users"}
+debug {"msg":"authenticated access","user":"test","endpoint":"POST /api/users"}
 debug {"msg":"created new user","id":"2"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"POST /api/users"}
+debug {"msg":"authenticated access","user":"test","endpoint":"POST /api/users"}
 debug {"msg":"updated user","id":"1"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"PUT /api/users/:id"}
+debug {"msg":"authenticated access","user":"test","endpoint":"PUT /api/users/:id"}
 debug {"msg":"got all users","count":"2"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
 debug {"msg":"deleted user","id":"2"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"DELETE /api/users/:id"}
+debug {"msg":"authenticated access","user":"test","endpoint":"DELETE /api/users/:id"}
 debug {"msg":"found user info","id":"1"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"GET /api/users/:id"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users/:id"}
 debug {"msg":"got all users","count":"1"}
-debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
