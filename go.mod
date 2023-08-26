@@ -3,6 +3,7 @@ module github.com/kylrth/disco-bouncer
 go 1.21
 
 require (
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cobaltspeech/log v0.1.12
 	github.com/gofiber/fiber/v2 v2.48.0
@@ -28,6 +29,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.1 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
