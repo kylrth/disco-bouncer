@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/cobaltspeech/log"
@@ -23,16 +24,16 @@ func AddAuthHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool) {
 
 	table := db.NewAdminTable(l, pool)
 
-	app.Post("/login", Login(table, sessionStore))
+	app.Post("/login", Login(l, table, sessionStore))
 	app.Post("/logout", Logout(l, sessionStore))
 
 	app.Use("/admin", AuthMiddleware(l, sessionStore))
-	app.Post("/admin/pass", ChangePassword(table, sessionStore))
+	app.Post("/admin/pass", ChangePassword(l, table, sessionStore))
 
 	app.Use("/api", AuthMiddleware(l, sessionStore))
 }
 
-func Login(table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
+func Login(l log.Logger, table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var input struct {
 			Username string `json:"username"`
@@ -40,12 +41,13 @@ func Login(table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
 		}
 
 		if err := c.BodyParser(&input); err != nil {
-			return c.Status(http.StatusBadRequest).SendString("Failed to parse body")
+			return c.Status(http.StatusBadRequest).
+				SendString(fmt.Sprintf("Failed to parse body: %v", err))
 		}
 
 		success, err := table.CheckPassword(c.Context(), input.Username, input.Password)
 		if err != nil {
-			return serverError(c, "Failed to check password")
+			return serverError(l, c, "Failed to check password", err)
 		}
 		if !success {
 			return c.Status(http.StatusUnauthorized).SendString("Invalid credentials")
@@ -53,12 +55,12 @@ func Login(table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
 
 		sess, err := sessionStore.Get(c)
 		if err != nil {
-			return serverError(c, "Failed to initiate session")
+			return serverError(l, c, "Failed to initiate session", HiddenErr{err})
 		}
 		sess.Set("username", input.Username)
 		err = sess.Save()
 		if err != nil {
-			return serverError(c, "Failed to save session")
+			return serverError(l, c, "Failed to save session", HiddenErr{err})
 		}
 
 		return c.SendString("Login successful")
@@ -69,7 +71,7 @@ func Logout(l log.Logger, sessionStore *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, err := sessionStore.Get(c)
 		if err != nil {
-			return serverError(c, "Failed to get session")
+			return serverError(l, c, "Failed to get session", err)
 		}
 
 		var username string
@@ -82,7 +84,7 @@ func Logout(l log.Logger, sessionStore *session.Store) fiber.Handler {
 
 		err = sess.Destroy()
 		if err != nil {
-			return serverError(c, "Failed to remove session")
+			return serverError(l, c, "Failed to remove session", HiddenErr{err})
 		}
 
 		l.Debug("msg", "logged out", "user", username)
@@ -91,7 +93,7 @@ func Logout(l log.Logger, sessionStore *session.Store) fiber.Handler {
 	}
 }
 
-func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
+func ChangePassword(l log.Logger, table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// get the password
 		var input struct {
@@ -116,14 +118,18 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 		}
 
 		if len(input.New) < 8 {
+			l.Info("msg", "password too short", "user", username)
+
 			return c.Status(http.StatusBadRequest).SendString("Password too short")
 		}
 
 		success, err := table.CheckPassword(c.Context(), username, input.Old)
 		if err != nil {
-			return serverError(c, "Failed to check password")
+			return serverError(l, c, "Failed to check password", HiddenErr{err})
 		}
 		if !success {
+			l.Info("msg", "invalid credentials", "user", username)
+
 			return c.Status(http.StatusUnauthorized).SendString("Invalid credentials")
 		}
 
@@ -133,7 +139,7 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 				return c.Status(http.StatusBadRequest).SendString("Password too long")
 			}
 
-			return serverError(c, "Failed to save password")
+			return serverError(l, c, "Failed to save password", HiddenErr{err})
 		}
 
 		return c.SendString("Password updated successfully")
@@ -144,6 +150,8 @@ func AuthMiddleware(l log.Logger, sessionStore *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, err := sessionStore.Get(c)
 		if err != nil {
+			l.Info("msg", "request not authenticated")
+
 			return c.Status(http.StatusUnauthorized).SendString("Not authenticated")
 		}
 
@@ -152,6 +160,8 @@ func AuthMiddleware(l log.Logger, sessionStore *session.Store) fiber.Handler {
 		case string:
 			username = s
 		default:
+			l.Info("msg", "invalid session data", "user", username)
+
 			return c.Status(http.StatusUnauthorized).SendString("Invalid session data")
 		}
 
@@ -160,9 +170,7 @@ func AuthMiddleware(l log.Logger, sessionStore *session.Store) fiber.Handler {
 		r := c.Route()
 		endpoint := r.Method + " " + r.Path
 
-		l.Debug(
-			"msg", "authenticated user accessed endpoint", "user", username, "endpoint", endpoint,
-		)
+		l.Debug("msg", "authenticated access", "user", username, "endpoint", endpoint)
 
 		return err
 	}

@@ -15,19 +15,19 @@ import (
 func AddCRUDHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool) {
 	table := db.NewUserTable(l, pool)
 
-	app.Get("/api/users", GetAllUsers(table))
-	app.Get("/api/users/:id", GetUser(table))
-	app.Post("/api/users", CreateUser(table))
-	app.Put("/api/users/:id", UpdateUser(table))
-	app.Delete("/api/users/:id", DeleteUser(table))
+	app.Get("/api/users", GetAllUsers(l, table))
+	app.Get("/api/users/:id", GetUser(l, table))
+	app.Post("/api/users", CreateUser(l, table))
+	app.Put("/api/users/:id", UpdateUser(l, table))
+	app.Delete("/api/users/:id", DeleteUser(l, table))
 }
 
 // GetAllUsers sends the entire users table.
-func GetAllUsers(table *db.UserTable) fiber.Handler {
+func GetAllUsers(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		users, err := table.GetUsers(c.Context())
 		if err != nil {
-			return serverError(c, fmt.Sprintf("Database error: %v", err))
+			return serverError(l, c, "Database error", err)
 		}
 
 		return c.JSON(users)
@@ -35,11 +35,13 @@ func GetAllUsers(table *db.UserTable) fiber.Handler {
 }
 
 // GetUser sends the information of the user with the specified ID.
-func GetUser(table *db.UserTable) fiber.Handler {
+func GetUser(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("id"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).SendString("Invalid ID")
+			l.Debug("msg", "invalid ID", "error", err, "id", c.Params("id"))
+
+			return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("Invalid ID: %v", err))
 		}
 
 		u, err := table.GetUser(c.Context(), id)
@@ -48,7 +50,7 @@ func GetUser(table *db.UserTable) fiber.Handler {
 				return c.Status(http.StatusNotFound).SendString("User not found")
 			}
 
-			return serverError(c, fmt.Sprintf("Database error: %v", err))
+			return serverError(l, c, "Database error", err)
 		}
 
 		return c.JSON(u)
@@ -56,7 +58,7 @@ func GetUser(table *db.UserTable) fiber.Handler {
 }
 
 // CreateUser creates a new user and returns the ID.
-func CreateUser(table *db.UserTable) fiber.Handler {
+func CreateUser(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var user db.User
 		if err := c.BodyParser(&user); err != nil {
@@ -66,7 +68,7 @@ func CreateUser(table *db.UserTable) fiber.Handler {
 		var err error
 		user.ID, err = table.CreateUser(c.Context(), &user)
 		if err != nil {
-			return serverError(c, fmt.Sprintf("Database error: %v", err))
+			return serverError(l, c, "Database error", err)
 		}
 
 		return c.JSON(&user)
@@ -74,11 +76,13 @@ func CreateUser(table *db.UserTable) fiber.Handler {
 }
 
 // UpdateUser updates the information for a user.
-func UpdateUser(table *db.UserTable) fiber.Handler {
+func UpdateUser(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("id"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).SendString("Invalid ID")
+			l.Debug("msg", "invalid ID", "error", err, "id", c.Params("id"))
+
+			return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("Invalid ID: %v", err))
 		}
 
 		var user db.User
@@ -94,7 +98,7 @@ func UpdateUser(table *db.UserTable) fiber.Handler {
 				return c.Status(http.StatusNotFound).SendString("User not found")
 			}
 
-			return serverError(c, fmt.Sprintf("Database error: %v", err))
+			return serverError(l, c, "Database error", err)
 		}
 
 		return c.JSON(user)
@@ -102,11 +106,13 @@ func UpdateUser(table *db.UserTable) fiber.Handler {
 }
 
 // DeleteUser removes a user by ID.
-func DeleteUser(table *db.UserTable) fiber.Handler {
+func DeleteUser(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("id"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).SendString("Invalid ID")
+			l.Debug("msg", "invalid ID", "error", err, "id", c.Params("id"))
+
+			return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("Invalid ID: %v", err))
 		}
 
 		err = table.DeleteUser(c.Context(), id)
@@ -115,7 +121,7 @@ func DeleteUser(table *db.UserTable) fiber.Handler {
 				return c.Status(http.StatusNotFound).SendString("User not found")
 			}
 
-			return serverError(c, fmt.Sprintf("Database error: %v", err))
+			return serverError(l, c, "Database error", err)
 		}
 
 		return c.SendString("User deleted successfully")
