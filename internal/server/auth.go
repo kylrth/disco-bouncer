@@ -111,7 +111,7 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 		case string:
 			username = u
 		default:
-			return c.Status(http.StatusBadRequest).SendString("Invalid session data")
+			return c.Status(http.StatusUnauthorized).SendString("Invalid session data")
 		}
 
 		if len(input.Password) < 8 {
@@ -143,7 +143,7 @@ func AuthMiddleware(l log.Logger, sessionStore *session.Store) fiber.Handler {
 		case string:
 			username = s
 		default:
-			return c.Status(http.StatusBadRequest).SendString("Invalid session data")
+			return c.Status(http.StatusUnauthorized).SendString("Invalid session data")
 		}
 
 		err = c.Next()
