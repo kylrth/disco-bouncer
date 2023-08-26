@@ -26,10 +26,10 @@ func AddAuthHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool) {
 	app.Post("/login", Login(table, sessionStore))
 	app.Post("/logout", Logout(l, sessionStore))
 
-	app.Use("/admin", AuthMiddleware(sessionStore))
+	app.Use("/admin", AuthMiddleware(l, sessionStore))
 	app.Post("/admin/pass", ChangePassword(table, sessionStore))
 
-	app.Use("/api", AuthMiddleware(sessionStore))
+	app.Use("/api", AuthMiddleware(l, sessionStore))
 }
 
 func Login(table *db.AdminTable, sessionStore *session.Store) fiber.Handler {
@@ -131,16 +131,30 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 	}
 }
 
-func AuthMiddleware(sessionStore *session.Store) fiber.Handler {
+func AuthMiddleware(l log.Logger, sessionStore *session.Store) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, err := sessionStore.Get(c)
 		if err != nil {
 			return c.Status(http.StatusUnauthorized).SendString("Not authenticated")
 		}
-		if sess.Get("username") == nil {
+
+		var username string
+		switch s := sess.Get("username").(type) {
+		case string:
+			username = s
+		default:
 			return c.Status(http.StatusBadRequest).SendString("Invalid session data")
 		}
 
-		return c.Next()
+		err = c.Next()
+
+		r := c.Route()
+		endpoint := r.Method + " " + r.Path
+
+		l.Debug(
+			"msg", "authenticated user accessed endpoint", "user", username, "endpoint", endpoint,
+		)
+
+		return err
 	}
 }
