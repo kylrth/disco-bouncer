@@ -60,20 +60,20 @@ func (s *AdminService) Logout(ctx context.Context) error {
 }
 
 // ChangePassword updates the password on the server. Must be logged in.
-func (s *AdminService) ChangePassword(ctx context.Context, pass string) error {
+func (s *AdminService) ChangePassword(ctx context.Context, oldPass, newPass string) error {
 	const p = "/admin/pass"
 
 	body := map[string]string{
-		"password": pass,
+		"old": oldPass,
+		"new": newPass,
 	}
 
 	resp, err := s.c.postJSON(ctx, p, body)
 	if err != nil {
 		switch resp.StatusCode {
+		case http.StatusUnauthorized:
+			return ErrNotLoggedIn
 		case http.StatusBadRequest:
-			if strings.Contains(err.Error(), "Invalid session data") {
-				return ErrNotLoggedIn
-			}
 			if strings.Contains(err.Error(), "Password too short") {
 				return ErrPasswordTooShort
 			}

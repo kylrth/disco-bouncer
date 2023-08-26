@@ -95,7 +95,8 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 	return func(c *fiber.Ctx) error {
 		// get the password
 		var input struct {
-			Password string `json:"password"`
+			Old string `json:"old"`
+			New string `json:"new"`
 		}
 		if err := c.BodyParser(&input); err != nil {
 			return c.Status(http.StatusBadRequest).SendString("Failed to parse body")
@@ -114,11 +115,19 @@ func ChangePassword(table *db.AdminTable, sessionStore *session.Store) fiber.Han
 			return c.Status(http.StatusUnauthorized).SendString("Invalid session data")
 		}
 
-		if len(input.Password) < 8 {
+		if len(input.New) < 8 {
 			return c.Status(http.StatusBadRequest).SendString("Password too short")
 		}
 
-		err = table.ChangePassword(c.Context(), username, input.Password)
+		success, err := table.CheckPassword(c.Context(), username, input.Old)
+		if err != nil {
+			return serverError(c, "Failed to check password")
+		}
+		if !success {
+			return c.Status(http.StatusUnauthorized).SendString("Invalid credentials")
+		}
+
+		err = table.ChangePassword(c.Context(), username, input.New)
 		if err != nil {
 			if errors.Is(err, bcrypt.ErrPasswordTooLong) {
 				return c.Status(http.StatusBadRequest).SendString("Password too long")

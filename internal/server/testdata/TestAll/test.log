@@ -1,5 +1,6 @@
 debug {"msg":"stored new admin","user":"test"}
 debug {"msg":"successful password check","user":"test"}
+debug {"msg":"successful password check","user":"test"}
 debug {"msg":"password updated","user":"test"}
 debug {"msg":"authenticated user accessed endpoint","user":"test","endpoint":"POST /admin/pass"}
 debug {"msg":"logged out","user":"test"}

@@ -148,7 +148,7 @@ func TestAll(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequentia
 	}
 
 	newPass := "newPass1"
-	err = c.Admin.ChangePassword(ctx, newPass)
+	err = c.Admin.ChangePassword(ctx, testPass, newPass)
 	if err != nil {
 		t.Fatalf("failed to change password: %v", err)
 	}
