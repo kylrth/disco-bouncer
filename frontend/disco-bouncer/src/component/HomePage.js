@@ -189,10 +189,10 @@ function HomePage({ isLoggedIn, username }) {
         </div>
       </nav>
       <div className="button-row">
-        <button className="student-table" onClick={setIsBulkUploadFormVisible(true)}>Bulk Upload Students</button>
-        <button className="student-table" onClick={setIsSingleUploadFormVisible(true)}>Add a Single Student</button>
-        <button className="student-table" onClick={setIsBulkDecryptFormVisible(true)}>Bulk Decrypt Names</button>
-        <button className="student-table" onClick={setIsSingleDecryptFormVisible(true)}>Single Decrypt Name</button>
+        <button className="student-table" onClick={() => setIsBulkUploadFormVisible(true)}>Bulk Upload Students</button>
+        <button className="student-table" onClick={() => setIsSingleUploadFormVisible(true)}>Add a Single Student</button>
+        <button className="student-table" onClick={() => setIsBulkDecryptFormVisible(true)}>Bulk Decrypt Names</button>
+        <button className="student-table" onClick={() => setIsSingleDecryptFormVisible(true)}>Single Decrypt Name</button>
       </div>
       
       {isSingleUploadFormVisible && (
@@ -248,7 +248,7 @@ function HomePage({ isLoggedIn, username }) {
                 </label>
               </div>
               <button type="submit">Submit</button>
-              <button type="button" onClick={setIsSingleUploadFormVisible(false)}>
+              <button type="button" onClick={() => setIsSingleUploadFormVisible(false)}>
                 Cancel
               </button>
             </form>
@@ -273,7 +273,7 @@ function HomePage({ isLoggedIn, username }) {
             <label htmlFor="bulk-upload" className="student-table">
               Bulk Upload Students
             </label>
-            <button onClick={setIsBulkUploadFormVisible(false)}>Cancel</button>
+            <button onClick={() => setIsBulkUploadFormVisible(false)}>Cancel</button>
           </div>
         </div>
             
@@ -298,7 +298,7 @@ function HomePage({ isLoggedIn, username }) {
             <label htmlFor="bulk-decrypt" className="student-table">
               Upload CSV to Bulk Decrypt Students
             </label>
-            <button onClick={setIsBulkUploadFormVisible(false)}>Cancel</button>
+            <button onClick={() => setIsBulkUploadFormVisible(false)}>Cancel</button>
           </div>
         </div>
             
@@ -323,7 +323,7 @@ function HomePage({ isLoggedIn, username }) {
                 value={encryptionKey}
                 onChange={(e) => setEncryptionKey(e.target.value)}
               />
-              <button onClick={setIsSingleDecryptFormVisible(false)}>Cancel</button>
+              <button onClick={() => setIsSingleDecryptFormVisible(false)}>Cancel</button>
             </form>
           </div>
         </div>
