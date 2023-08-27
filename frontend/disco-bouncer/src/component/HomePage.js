@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthProvider';
 import './HomePage.css';
 
 
-function HomePage({ isLoggedIn, username }) {
-  const navigate = useNavigate();
+function HomePage() {
+  const { authenticated, cookies, logout } = useAuth();
 
+  const [userData, setUserData] = useState(null);
   const [students, setStudents] = useState([]);
   const [studentId, setStudentId] = useState([]);
   const [encryptionKey, setEncryptionKey] = useState([]);
@@ -14,16 +16,54 @@ function HomePage({ isLoggedIn, username }) {
   const [isBulkUploadFormVisible, setIsBulkUploadFormVisible] = useState(false);
   const [isBulkDecryptFormVisible, setIsBulkDecryptFormVisible] = useState(false);
   const [isSingleDecryptFormVisible, setIsSingleDecryptFormVisible] = useState(false);
-
   const [name, setName] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
   const [selectedRoles, setSelectedRoles] = useState([]);
+
+  const navigate = useNavigate();
+
+  const fetchStudents = async () => {
+    try {
+      const response = await fetch('https://discobouncer.kylrth.com/api/users');
+      const data = await response.json();
+      setStudents(data);
+      console.log("getting students");
+      console.log(students)
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('https://discobouncer.kylrth.com/api/users', {
+        headers: {
+          Cookie: cookies,
+        },
+      });
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!authenticated) {
+      navigate('/login');
+    } else {
+      if (authenticated && cookies) {
+        fetchUserData();
+        fetchStudents();
+      }
+    }
+  }, [authenticated, cookies, navigate, fetchUserData, fetchStudents]);
 
   const handleLogout = async () => {
     try {
       const response = await axios.post('https://discobouncer.kylrth.com/logout'); // Make a POST request to /logout
       if (response.status === 200) {
-        isLoggedIn = false;
+        logout();
         navigate('/login');
       } else {
         // Handle error case if needed
@@ -32,17 +72,6 @@ function HomePage({ isLoggedIn, username }) {
       // Handle error case if needed
     }
   };
-
-  useEffect(() => {
-    // Fetch students data from API and set it to the state
-    // Example API call (replace with your actual API endpoint):
-    fetch('https://discobouncer.kylrth.com/api/users')
-      .then(response => response.json())
-      .then(data => setStudents(data))
-      .catch(error => console.error('Error fetching students:', error));
-      console.log("got users")
-      console.log(students)
-  }, [students]);
 
   const handleEdit = (studentId) => {
     // Handle edit action here
@@ -123,16 +152,6 @@ function HomePage({ isLoggedIn, username }) {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      const response = await fetch('https://discobouncer.kylrth.com/api/users');
-      const data = await response.json();
-      setStudents(data);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    }
-  };
-
   const handleBulkDecrypt = async (e) => {
     e.preventDefault();
 
@@ -148,7 +167,7 @@ function HomePage({ isLoggedIn, username }) {
 
       if (response.status === 200) {
         // Process the decrypted data (e.g., display in a modal or update state)
-        setIsBulkUploadFormVisible(false)();
+        setIsBulkDecryptFormVisible(false)();
       } else {
         // Handle error case if needed
       }
@@ -182,7 +201,7 @@ function HomePage({ isLoggedIn, username }) {
   return (
     <div className="home-page">
       <nav className="top-navbar">
-        <p className='welcome'>Welcome, {username}</p>
+        <p className='welcome'>Welcome, {userData.username}</p>
         <div className="nav-buttons">
           <Link to="/manage-user" className="top-navbar-link">Change Password</Link>
           <Link to="/logout" className="top-navbar-link" onClick={handleLogout}>Logout</Link>
@@ -298,7 +317,7 @@ function HomePage({ isLoggedIn, username }) {
             <label htmlFor="bulk-decrypt" className="student-table">
               Upload CSV to Bulk Decrypt Students
             </label>
-            <button onClick={() => setIsBulkUploadFormVisible(false)}>Cancel</button>
+            <button onClick={() => setIsBulkDecryptFormVisible(false)}>Cancel</button>
           </div>
         </div>
             
@@ -323,6 +342,7 @@ function HomePage({ isLoggedIn, username }) {
                 value={encryptionKey}
                 onChange={(e) => setEncryptionKey(e.target.value)}
               />
+              <button type="submit">Submit</button>
               <button onClick={() => setIsSingleDecryptFormVisible(false)}>Cancel</button>
             </form>
           </div>

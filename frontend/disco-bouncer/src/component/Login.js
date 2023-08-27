@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthProvider';
 import axios from 'axios';
 import './Login.css';
 
 function Login({ onLogin }) {
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [input_username, setUsername] = useState('');
@@ -17,7 +19,9 @@ function Login({ onLogin }) {
       });
   
       if (response.status === 200) {
-        // Call the callback function passed as prop
+        const cookies = response.headers.get('set-cookie');
+        login(cookies);
+
         onLogin(input_username);
         navigate('/home');
       } else {
@@ -31,7 +35,7 @@ function Login({ onLogin }) {
   return (
     <div className="login-page">
         <div className="logo-container">
-            <img src="./logo.png" alt="Disco Bouncer Logo" className="logo" />
+            <img src="./logo.png" alt="Welcome to Disco Bouncer!" className="logo" />
         </div>
         <br />
         <br />

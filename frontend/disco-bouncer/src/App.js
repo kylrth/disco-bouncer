@@ -7,12 +7,10 @@ import ManageUser from './component/ManageUser';
 import HomePage from './component/HomePage';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);  
-  const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleLogin = (loggedInUsername) => {
     setIsLoggedIn(true);
-    setUsername(loggedInUsername);
   };
 
   return (
@@ -21,16 +19,16 @@ function App() {
         <Routes>
           <Route 
             path="/index.html" 
-            element={<HomePage isLoggedIn={isLoggedIn} username={username} /> } />
+            element={<HomePage isLoggedIn={isLoggedIn} /> } />
           <Route 
             path="/" 
-            element={<HomePage isLoggedIn={isLoggedIn} username={username} /> } />
+            element={<HomePage isLoggedIn={isLoggedIn} /> } />
           <Route 
             path="/home" 
-            element={<HomePage isLoggedIn={isLoggedIn} username={username} /> } />
+            element={<HomePage isLoggedIn={isLoggedIn} /> } />
           <Route 
             path="/manage-user" 
-            element={<ManageUser isLoggedIn={isLoggedIn} username={username} /> } />
+            element={<ManageUser isLoggedIn={isLoggedIn} /> } />
           <Route 
             path="/login" 
             element={<Login onLogin={handleLogin} />} />
