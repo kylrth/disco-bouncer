@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -14,6 +16,7 @@ import (
 
 	"github.com/kylrth/disco-bouncer/internal/db"
 	"github.com/kylrth/disco-bouncer/internal/server"
+	"github.com/kylrth/disco-bouncer/pkg/bouncerbot"
 )
 
 func withLAndDB(f func(log.Logger, *pgxpool.Pool, []string) error) func(*cobra.Command, []string) {
@@ -50,5 +53,71 @@ func serve(l log.Logger, pool *pgxpool.Pool) error {
 	server.AddAuthHandlers(l, app, pool)
 	server.AddCRUDHandlers(l, app, pool)
 
+	token := os.Getenv("DISCORD_TOKEN")
+	table := db.NewUserTable(l, pool)
+	bot, err := bouncerbot.New(l, token, table)
+	if err != nil {
+		return fmt.Errorf("set up Discord bot: %w", err)
+	}
+	err = addGuildInfo(l, bot)
+	if err != nil {
+		return fmt.Errorf("add guild info: %w", err)
+	}
+
+	err = bot.Open()
+	if err != nil {
+		return fmt.Errorf("start Discord bot: %w", err)
+	}
+	defer func() {
+		err = bot.Close()
+		if err != nil {
+			l.Error("msg", "error closing Discord connection", "error", err)
+		}
+	}()
+	l.Info("msg", "started bot; press Ctrl+C to exit")
+
 	return app.Listen(":80")
+}
+
+const guildInfoFile = "/data/guildinfo.json"
+
+func addGuildInfo(l log.Logger, bot *bouncerbot.Bot) error {
+	b, err := os.ReadFile(guildInfoFile)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			l.Info("msg", "guild info file does not exist")
+			bot.AddGuildInfoCallback(saveGuildInfo(l))
+
+			return nil
+		}
+
+		return err
+	}
+
+	var info bouncerbot.GuildInfo
+
+	err = json.Unmarshal(b, &info)
+	if err != nil {
+		return err
+	}
+
+	bot.Guild = &info
+
+	return nil
+}
+
+func saveGuildInfo(l log.Logger) func(*bouncerbot.GuildInfo) {
+	return func(info *bouncerbot.GuildInfo) {
+		b, err := json.Marshal(info)
+		if err != nil {
+			l.Error("msg", "failed to marshal guild info to save it", "error", err)
+
+			return
+		}
+
+		err = os.WriteFile(guildInfoFile, b, 0o600)
+		if err != nil {
+			l.Error("msg", "failed to write guild info file", "error", err)
+		}
+	}
 }
