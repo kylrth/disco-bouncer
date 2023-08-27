@@ -46,18 +46,18 @@
   .student-table {
     border-collapse: collapse;
     width: 100%;
-    border: 1px solid #ddd;
+    border: 1px solid #010101;
   }
   
   .student-table th,
   .student-table td {
-    border: 1px solid #ddd;
+    border: 1px solid #abacbc;
     padding: 8px;
     text-align: left;
   }
   
   .student-table th {
-    background-color: #f2f2f2;
+    background-color: #abacbc;
   }
   
   .student-table th:last-child,
@@ -65,7 +65,7 @@
     text-align: center;
   }
   
-  .student-table button {
+  .student-table {
     background-color: #007bff;
     color: white;
     border: none;

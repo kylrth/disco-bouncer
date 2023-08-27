@@ -8,7 +8,13 @@ function HomePage({ isLoggedIn, username }) {
   const navigate = useNavigate();
 
   const [students, setStudents] = useState([]);
-  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [studentId, setStudentId] = useState([]);
+  const [encryptionKey, setEncryptionKey] = useState([]);
+  const [isSingleUploadFormVisible, setIsSingleUploadFormVisible] = useState(false);
+  const [isBulkUploadFormVisible, setIsBulkUploadFormVisible] = useState(false);
+  const [isBulkDecryptFormVisible, setIsBulkDecryptFormVisible] = useState(false);
+  const [isSingleDecryptFormVisible, setIsSingleDecryptFormVisible] = useState(false);
+
   const [name, setName] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
   const [selectedRoles, setSelectedRoles] = useState([]);
@@ -34,7 +40,9 @@ function HomePage({ isLoggedIn, username }) {
       .then(response => response.json())
       .then(data => setStudents(data))
       .catch(error => console.error('Error fetching students:', error));
-  }, []);
+      console.log("got users")
+      console.log(students)
+  }, [students]);
 
   const handleEdit = (studentId) => {
     // Handle edit action here
@@ -58,14 +66,6 @@ function HomePage({ isLoggedIn, username }) {
     ));
   };
   
-  const handleAddStudent = () => {
-    setIsFormVisible(true);
-  };
-
-  const handleCloseForm = () => {
-    setIsFormVisible(false);
-  };
-  
   const handleRoleChange = (role) => {
     if (selectedRoles.includes(role)) {
       setSelectedRoles(selectedRoles.filter(r => r !== role));
@@ -74,7 +74,7 @@ function HomePage({ isLoggedIn, username }) {
     }
   };
 
-  const handleSubmitForm = async (e) => {
+  const handleSubmitSingleUploadForm = async (e) => {
     e.preventDefault();
 
     try {
@@ -86,7 +86,9 @@ function HomePage({ isLoggedIn, username }) {
 
       if (response.status === 200) {
         // Refresh the student list or perform any other required action
-        setIsFormVisible(false);
+        setIsSingleUploadFormVisible(false);
+        fetchStudents();
+        renderStudents();
       } else {
         // Handle error case if needed
       }
@@ -94,6 +96,88 @@ function HomePage({ isLoggedIn, username }) {
       // Handle error case if needed
     }
   };
+
+  const handleBulkUpload = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('csv', e.target.files[0]);
+
+    try {
+      const response = await axios.post('https://discobouncer.kylrth.com/api/users', formData, { //accepts a json of a user
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.status === 200) {
+        // Refresh the student list or perform any other required action
+        setIsBulkUploadFormVisible(false)();
+        fetchStudents();
+        renderStudents();
+      } else {
+        // Handle error case if needed
+      }
+    } catch (error) {
+      // Handle error case if needed
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      const response = await fetch('https://discobouncer.kylrth.com/api/users');
+      const data = await response.json();
+      setStudents(data);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
+  };
+
+  const handleBulkDecrypt = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('csv', e.target.files[0]);
+
+    try {
+      const response = await axios.post('https://discobouncer.kylrth.com/api/bulk-decrypt', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.status === 200) {
+        // Process the decrypted data (e.g., display in a modal or update state)
+        setIsBulkUploadFormVisible(false)();
+      } else {
+        // Handle error case if needed
+      }
+    } catch (error) {
+      // Handle error case if needed
+    }
+  };
+
+  const handleSingleDecrypt = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('studentId', e.target[0].value);
+    formData.append('encryptionCode', e.target[1].value);
+
+    try {
+      const response = await axios.post('https://discobouncer.kylrth.com/api/single-decrypt', formData);
+
+      if (response.status === 200) {
+        // Process the decrypted data (e.g., display in a modal or update state)
+        setIsSingleDecryptFormVisible(false)();
+      } else {
+        // Handle error case if needed
+      }
+    } catch (error) {
+      // Handle error case if needed
+    }
+  };
+
 
   return (
     <div className="home-page">
@@ -105,17 +189,17 @@ function HomePage({ isLoggedIn, username }) {
         </div>
       </nav>
       <div className="button-row">
-        <button className="student-table">Bulk Upload Students</button>
-        <button className="student-table" onClick={handleAddStudent}>Add a Single Student</button>
-        <button className="student-table">Bulk Decrypt Names</button>
-        <button className="student-table">Single Decrypt Name</button>
+        <button className="student-table" onClick={setIsBulkUploadFormVisible(true)}>Bulk Upload Students</button>
+        <button className="student-table" onClick={setIsSingleUploadFormVisible(true)}>Add a Single Student</button>
+        <button className="student-table" onClick={setIsBulkDecryptFormVisible(true)}>Bulk Decrypt Names</button>
+        <button className="student-table" onClick={setIsSingleDecryptFormVisible(true)}>Single Decrypt Name</button>
       </div>
       
-      {isFormVisible && (
+      {isSingleUploadFormVisible && (
         <div className="overlay">
           <div className="student-form">
             <h2>Add a Single Student</h2>
-            <form onSubmit={handleSubmitForm}>
+            <form onSubmit={handleSubmitSingleUploadForm}>
               <input
                 type="text"
                 placeholder="Name"
@@ -164,13 +248,89 @@ function HomePage({ isLoggedIn, username }) {
                 </label>
               </div>
               <button type="submit">Submit</button>
-              <button type="button" onClick={handleCloseForm}>
+              <button type="button" onClick={setIsSingleUploadFormVisible(false)}>
                 Cancel
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {isBulkUploadFormVisible && (
+        <div className="overlay">
+          <div className="student-form">
+            <h2>Add Many Students via CSV Upload</h2>
+            <a href="./sample-bulk-upload.csv" download>Download Sample CSV Template</a>
+            <br />
+            <br />
+            <input
+              type="file"
+              accept=".csv"
+              id="bulk-upload"
+              style={{ display: 'none' }}
+              onChange={handleBulkUpload}
+            />
+            <label htmlFor="bulk-upload" className="student-table">
+              Bulk Upload Students
+            </label>
+            <button onClick={setIsBulkUploadFormVisible(false)}>Cancel</button>
+          </div>
+        </div>
+            
+        
+      )}
+
+      {isBulkDecryptFormVisible && (
+        <div className="overlay">
+          <div className="student-form">
+            <h2>Decrypt Many Students via CSV Upload</h2>
+            <p>Upload a CSV with student IDs and encryption keys to decrypt IDs into student names.</p>
+            <a href="./sample-bulk-decrypt.csv" download>Download Sample CSV Template</a>
+            <br />
+            <br />
+            <input
+              type="file"
+              accept=".csv"
+              id="bulk-decrypt"
+              style={{ display: 'none' }}
+              onChange={handleBulkDecrypt}
+            />
+            <label htmlFor="bulk-decrypt" className="student-table">
+              Upload CSV to Bulk Decrypt Students
+            </label>
+            <button onClick={setIsBulkUploadFormVisible(false)}>Cancel</button>
+          </div>
+        </div>
+            
+        
+      )}
+
+      {isSingleDecryptFormVisible && (
+        <div className="overlay">
+          <div className="student-form">
+            <h2>Decrypt a Single Student Name</h2>
+            
+            <form onSubmit={handleSingleDecrypt}>
+              <input
+                type="text"
+                placeholder="Student ID"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Encryption Key"
+                value={encryptionKey}
+                onChange={(e) => setEncryptionKey(e.target.value)}
+              />
+              <button onClick={setIsSingleDecryptFormVisible(false)}>Cancel</button>
+            </form>
+          </div>
+        </div>
+            
+        
+      )}
+
       <div className="student-table-container">
         <table className="student-table">
           <thead>

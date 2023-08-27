@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import './ManageUser.css';
+import React from 'react';
+// import './ManageUser.css';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
 function ManageUser({ isLoggedIn, username }) {
   const navigate = useNavigate();
   
-  const [newPassword, setNewPassword] = useState('');
+  // const [newPassword, setNewPassword] = useState('');
 
   const handleLogout = async () => {
     try {
@@ -22,11 +22,11 @@ function ManageUser({ isLoggedIn, username }) {
     }
   };
 
-  const handleChangePassword = () => {
-    // Perform the logic to change the password using newPassword state
-    console.log(`Changing password for user ${username} to: ${newPassword}`);
-    // You can make an API call here to update the user's password
-  };
+  // const handleChangePassword = () => {
+  //   // Perform the logic to change the password using newPassword state
+  //   console.log(`Changing password for user ${username} to: ${newPassword}`);
+  //   // You can make an API call here to update the user's password
+  // };
 
   return (
     <div className="manage-user">
@@ -35,7 +35,9 @@ function ManageUser({ isLoggedIn, username }) {
         <Link to="/logout" className="top-navbar-link" onClick={handleLogout}>Logout</Link>
       </nav>
       <h2>Manage User: {username}</h2>
-      <div className="password-change">
+      <br />
+      <p>This page is under construction</p>
+      {/* <div className="password-change">
         <label>New Password:</label>
         <input
           type="password"
@@ -46,7 +48,7 @@ function ManageUser({ isLoggedIn, username }) {
         <br />
         <br />
         <Link to="/home">Back</Link>
-      </div>
+      </div> */}
     </div>
   );
 }
