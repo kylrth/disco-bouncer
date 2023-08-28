@@ -56,6 +56,12 @@ func serve(l log.Logger, pool *pgxpool.Pool) error {
 	server.AddCRUDHandlers(l, app, uTable)
 
 	token := os.Getenv("DISCORD_TOKEN")
+	if token == "disable" {
+		l.Info("msg", "running without Discord bot")
+
+		return app.Listen(":80")
+	}
+
 	bot, err := bouncerbot.New(l, token, uTable)
 	if err != nil {
 		return fmt.Errorf("set up Discord bot: %w", err)
