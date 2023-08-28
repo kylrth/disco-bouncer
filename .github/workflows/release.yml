@@ -16,14 +16,14 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: build binaries
-      run: make build
+      run: make release
 
-    - name: Release binary to GitHub
+    - name: release binary to GitHub
       uses: skx/github-action-publish-binaries@release-2.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        args: 'bin/client'
+        args: 'bin/release/*'
 
   image:
     runs-on: ubuntu-latest

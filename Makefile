@@ -39,6 +39,28 @@ $(BINDIR)/client: $(GO_FILES)
 .PHONY: build
 build: $(BINDIR)/bouncer $(BINDIR)/client
 
+## CLIENT RELEASE BUILDS
+
+RELEASEDIR := $(BINDIR)/release
+ARCHES := amd64 arm64
+
+$(RELEASEDIR)/bouncer-client-linux-%: $(GO_FILES)
+	mkdir -p $(RELEASEDIR)
+	GOOS=linux GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-linux-$* ./cmd
+
+$(RELEASEDIR)/bouncer-client-darwin-%: $(GO_FILES)
+	mkdir -p $(RELEASEDIR)
+	GOOS=darwin GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-darwin-$* ./cmd
+
+$(RELEASEDIR)/bouncer-client-windows-%.exe: $(GO_FILES)
+	mkdir -p $(RELEASEDIR)
+	GOOS=windows GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-windows-$*.exe ./cmd
+
+.PHONY: release
+release: $(foreach arch,$(ARCHES),$(RELEASEDIR)/bouncer-client-linux-$(arch) $(RELEASEDIR)/bouncer-client-darwin-$(arch) $(RELEASEDIR)/bouncer-client-windows-$(arch).exe)
+
+## DOCKER
+
 .PHONY: docker
 docker:
 	docker build -t ghcr.io/kylrth/disco-bouncer:latest .
