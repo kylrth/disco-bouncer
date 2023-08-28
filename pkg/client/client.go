@@ -213,11 +213,12 @@ func (c *Client) delete(ctx context.Context, p string) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return handleNotOK(resp)
 	}
+
+	resp.Body.Close()
 
 	return nil
 }
