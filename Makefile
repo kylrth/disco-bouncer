@@ -32,8 +32,12 @@ $(BINDIR)/bouncer: $(GO_FILES)
 	mkdir -p $(BINDIR)
 	go build -o $(BINDIR)/bouncer ./cmd
 
+$(BINDIR)/client: $(GO_FILES)
+	mkdir -p $(BINDIR)
+	go build -o $(BINDIR)/client ./cmd/client
+
 .PHONY: build
-build: $(BINDIR)/bouncer
+build: $(BINDIR)/bouncer $(BINDIR)/client
 
 .PHONY: docker
 docker:
