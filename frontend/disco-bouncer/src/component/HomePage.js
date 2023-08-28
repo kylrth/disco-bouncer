@@ -6,9 +6,12 @@ import './HomePage.css';
 
 
 function HomePage() {
-  const { authenticated, cookies, logout } = useAuth();
+  const { authenticated, cookies, logout, setAuthenticated, setCookies } = useAuth();
+  const [isLoading, setLoading] = useState(true); // Initial loading state
+  const [isRestoringAuth, setRestoringAuth] = useState(true); // Flag for restoring auth
 
-  const [userData, setUserData] = useState(null);
+
+  const [userData, setUserData] = useState('');
   const [students, setStudents] = useState([]);
   const [studentId, setStudentId] = useState([]);
   const [encryptionKey, setEncryptionKey] = useState([]);
@@ -24,11 +27,15 @@ function HomePage() {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch('https://discobouncer.kylrth.com/api/users');
-      const data = await response.json();
+      const response = await axios.get('https://discobouncer.kylrth.com/api/users', {
+        withCredentials: true, // Include cookies
+      });
+      
+      const data = response.data;
       setStudents(data);
+      
       console.log("getting students");
-      console.log(students)
+      console.log(data); // Use 'data' instead of 'students' here
     } catch (error) {
       console.error('Error fetching students:', error);
     }
@@ -36,12 +43,14 @@ function HomePage() {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('https://discobouncer.kylrth.com/api/users', {
+      const response = await axios.get('https://discobouncer.kylrth.com/api/users', {
+        withCredentials: true, // Include cookies
         headers: {
-          Cookie: cookies,
+          Cookie: cookies, // Set the 'Cookie' header using the 'cookies' variable
         },
       });
-      const data = await response.json();
+      
+      const data = response.data;
       setUserData(data);
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -49,7 +58,18 @@ function HomePage() {
   };
 
   useEffect(() => {
-    if (!authenticated) {
+    const savedAuthenticated = localStorage.getItem('authenticated');
+    const savedCookies = localStorage.getItem('cookies');
+
+    if (savedAuthenticated && savedCookies) {
+      setAuthenticated(JSON.parse(savedAuthenticated));
+      setCookies(savedCookies);
+    }
+
+    setLoading(false); // Set loading to false once authentication is restored
+    setRestoringAuth(false); // Set restoring auth to false
+
+    if (!authenticated && !isRestoringAuth) {
       navigate('/login');
     } else {
       if (authenticated && cookies) {
@@ -108,6 +128,10 @@ function HomePage() {
 
     try {
       const response = await axios.post('https://discobouncer.kylrth.com/api/users', {
+        withCredentials: true, // Include cookies
+        headers: {
+          Cookie: cookies, // Set the 'Cookie' header using the 'cookies' variable
+        },
         name,
         graduationYear,
         roles: selectedRoles
@@ -134,6 +158,7 @@ function HomePage() {
 
     try {
       const response = await axios.post('https://discobouncer.kylrth.com/api/users', formData, { //accepts a json of a user
+        withCredentials: true, // Include cookies
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -160,6 +185,7 @@ function HomePage() {
 
     try {
       const response = await axios.post('https://discobouncer.kylrth.com/api/bulk-decrypt', formData, {
+        withCredentials: true, // Include cookies
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -184,7 +210,9 @@ function HomePage() {
     formData.append('encryptionCode', e.target[1].value);
 
     try {
-      const response = await axios.post('https://discobouncer.kylrth.com/api/single-decrypt', formData);
+      const response = await axios.post('https://discobouncer.kylrth.com/api/single-decrypt', formData,{
+        withCredentials: true, // Include cookies
+      });
 
       if (response.status === 200) {
         // Process the decrypted data (e.g., display in a modal or update state)
@@ -197,6 +225,9 @@ function HomePage() {
     }
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>; // Show a loading indicator during the initial loading phase
+  }
 
   return (
     <div className="home-page">
