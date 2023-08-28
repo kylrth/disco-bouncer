@@ -63,8 +63,30 @@ func handleNotOK(resp *http.Response) error {
 	return errors.New(string(errMsg))
 }
 
+// joinURL adds the endpoint path to the end of the baseURL. endpoint may contain query parameters.
+func joinURL(baseURL, endpoint string) (string, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	endp, err := url.Parse(endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	base.Path, err = url.JoinPath(base.Path, endp.Path)
+	if err != nil {
+		return "", err
+	}
+
+	base.RawQuery = endp.RawQuery
+
+	return base.String(), nil
+}
+
 func (c *Client) get(ctx context.Context, p string) (*http.Response, error) {
-	p, err := url.JoinPath(c.baseURL, p)
+	p, err := joinURL(c.baseURL, p)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +129,7 @@ func (c *Client) getJSON(ctx context.Context, p string, v interface{}) error {
 func (c *Client) post(
 	ctx context.Context, p, contentType string, body io.Reader,
 ) (*http.Response, error) {
-	p, err := url.JoinPath(c.baseURL, p)
+	p, err := joinURL(c.baseURL, p)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +175,7 @@ func (c *Client) putJSONrecvJSON(ctx context.Context, p string, data, v interfac
 		return err
 	}
 
-	p, err = url.JoinPath(c.baseURL, p)
+	p, err = joinURL(c.baseURL, p)
 	if err != nil {
 		return err
 	}
@@ -177,7 +199,7 @@ func (c *Client) putJSONrecvJSON(ctx context.Context, p string, data, v interfac
 }
 
 func (c *Client) delete(ctx context.Context, p string) error {
-	p, err := url.JoinPath(c.baseURL, p)
+	p, err := joinURL(c.baseURL, p)
 	if err != nil {
 		return err
 	}

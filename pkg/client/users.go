@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/kylrth/disco-bouncer/internal/db"
 )
@@ -13,9 +14,40 @@ type UsersService struct {
 	c *Client
 }
 
+type filters struct {
+	keyHash string
+}
+
+// FilterOption is a way to add filter options to the request when calling GetAllUsers.
+type FilterOption = func(f *filters)
+
+// WithKeyHash returns a FilterOption that filters by the provided MD5 key hash.
+func WithKeyHash(keyHash string) FilterOption {
+	return func(f *filters) { f.keyHash = keyHash }
+}
+
+func (f *filters) formatQueryParams() string {
+	var out strings.Builder
+
+	if f.keyHash != "" {
+		out.WriteString(",keyHash=" + f.keyHash)
+	}
+
+	if out.Len() == 0 {
+		return ""
+	}
+
+	return "?" + out.String()[1:] // remove initial ","
+}
+
 // GetAllUsers gets the current users table.
-func (s *UsersService) GetAllUsers(ctx context.Context) ([]*db.User, error) {
-	const p = "/api/users"
+func (s *UsersService) GetAllUsers(ctx context.Context, opts ...FilterOption) ([]*db.User, error) {
+	var f filters
+	for _, opt := range opts {
+		opt(&f)
+	}
+
+	p := "/api/users" + f.formatQueryParams()
 
 	var out []*db.User
 
