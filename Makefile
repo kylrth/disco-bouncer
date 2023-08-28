@@ -41,4 +41,4 @@ build: $(BINDIR)/bouncer $(BINDIR)/client
 
 .PHONY: docker
 docker:
-	docker build -t kylrth/disco-bouncer:latest .
+	docker build -t ghcr.io/kylrth/disco-bouncer:latest .

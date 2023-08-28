@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -73,7 +77,7 @@ jobs:
     steps:
       - name: set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: build and push
+      - name: build
         uses: docker/build-push-action@v4
         with:
-          tags: kylrth/disco-bouncer:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
