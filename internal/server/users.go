@@ -22,10 +22,13 @@ func AddCRUDHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool) {
 	app.Delete("/api/users/:id", DeleteUser(l, table))
 }
 
-// GetAllUsers sends the entire users table.
+// GetAllUsers sends the entire users table, possibly filtered by provided query parameters.
 func GetAllUsers(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		users, err := table.GetUsers(c.Context())
+		// get filter values
+		keyHash := c.Query("keyHash", "")
+
+		users, err := table.GetUsers(c.Context(), db.WithKeyHash(keyHash))
 		if err != nil {
 			return serverError(l, c, "Database error", err)
 		}

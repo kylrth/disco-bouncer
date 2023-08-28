@@ -76,7 +76,7 @@ func TestMain(m *testing.M) { //nolint:cyclop // lots of setup
 	if err = pool.Retry(func() error {
 		// apply migrations to set up tables
 		newErr := db.ApplyMigrations(pgURI)
-		if newErr != nil && !strings.Contains(newErr.Error(), "connection reset by peer") {
+		if newErr != nil && !isStartupErr(newErr) {
 			return backoff.Permanent(newErr)
 		}
 
@@ -99,6 +99,24 @@ func TestMain(m *testing.M) { //nolint:cyclop // lots of setup
 	}
 
 	os.Exit(code)
+}
+
+var startupErrors = []string{
+	"connection reset by peer",
+	"the database system is starting up",
+	"connect: EOF",
+}
+
+func isStartupErr(err error) bool {
+	s := err.Error()
+
+	for _, search := range startupErrors {
+		if strings.Contains(s, search) {
+			return true
+		}
+	}
+
+	return false
 }
 
 //nolint:paralleltest // This test uses a database.
@@ -136,6 +154,9 @@ func TestAll(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequentia
 		}
 	}()
 
+	// wait for the server to accept connections
+	time.Sleep(time.Second / 2)
+
 	// define client
 	c, err := client.NewClient("http://localhost" + addr)
 	if err != nil {
@@ -172,11 +193,13 @@ func TestAll(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequentia
 	}
 
 	u1 := db.User{
-		Name:       "John Doe",
-		FinishYear: 2021,
+		Name:        "John Doe",
+		NameKeyHash: "asdfjkl",
+		FinishYear:  2021,
 	}
 	u2 := db.User{
 		Name:        "Jason Mendoza",
+		NameKeyHash: "lkjfdsa",
 		FinishYear:  2019,
 		AlumniBoard: true,
 	}
@@ -204,6 +227,14 @@ func TestAll(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequentia
 		cmpopts.SortSlices(func(x, y *db.User) bool { return x.ID < y.ID }),
 	)
 	if diff != "" {
+		t.Error("unexpected users (-want +got):\n" + diff)
+	}
+
+	users, err = c.Users.GetAllUsers(ctx, client.WithKeyHash(u1.NameKeyHash))
+	if err != nil {
+		t.Errorf("failed to get filtered users: %v", err)
+	}
+	if diff = cmp.Diff([]*db.User{&u1}, users); diff != "" {
 		t.Error("unexpected users (-want +got):\n" + diff)
 	}
 

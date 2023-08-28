@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/cobaltspeech/log"
 	"github.com/jackc/pgx/v5"
@@ -29,6 +31,7 @@ func NewUserTable(l log.Logger, pool PgxIface) *UserTable {
 type User struct {
 	ID                int    `json:"id"`
 	Name              string `json:"name"`
+	NameKeyHash       string `json:"name_key_hash"`
 	FinishYear        int    `json:"finish_year"`
 	Professor         bool   `json:"professor"`
 	TA                bool   `json:"ta"`
@@ -36,14 +39,80 @@ type User struct {
 	AlumniBoard       bool   `json:"alumni_board"`
 }
 
-const (
-	userFields = "name, finish_year, professor, ta, student_leadership, alumni_board"
-	userSets   = "name=$2, finish_year=$3, professor=$4, ta=$5, student_leadership=$6, alumni_board=$7"
+var (
+	userFields = strings.Join([]string{
+		"name",
+		"name_key_hash",
+		"finish_year",
+		"professor",
+		"ta",
+		"student_leadership",
+		"alumni_board",
+	}, ", ")
+	userSets = strings.Join([]string{
+		"name=$2",
+		"name_key_hash=$3",
+		"finish_year=$4",
+		"professor=$5",
+		"ta=$6",
+		"student_leadership=$7",
+		"alumni_board=$8",
+	}, ", ")
 )
 
+type filters struct {
+	keyHash string
+}
+
+// FilterOption is a way to filter by particular values with GetUsers.
+type FilterOption = func(f *filters)
+
+// WithKeyHash returns a FilterOption that filters by the provided MD5 key hash.
+func WithKeyHash(keyHash string) FilterOption {
+	return func(f *filters) { f.keyHash = keyHash }
+}
+
+func (f *filters) formatWhereString() string {
+	var out strings.Builder
+	currentIndex := 1
+
+	if f.keyHash != "" {
+		out.WriteString(" WHERE name_key_hash=$" + strconv.Itoa(currentIndex))
+		currentIndex++ //nolint:ineffassign,wastedassign // will be needed with more filter values
+	}
+
+	return out.String()
+}
+
+func (f *filters) queryList() []any {
+	var out []any
+
+	if f.keyHash != "" {
+		out = append(out, f.keyHash)
+	}
+
+	return out
+}
+
+func (f *filters) logInfo() []any {
+	var out []any
+
+	if f.keyHash != "" {
+		out = append(out, "keyHash", f.keyHash)
+	}
+
+	return out
+}
+
 // GetUsers returns all users in the database.
-func (t *UserTable) GetUsers(ctx context.Context) ([]*User, error) {
-	rows, err := t.pool.Query(ctx, "SELECT id, "+userFields+" FROM users")
+func (t *UserTable) GetUsers(ctx context.Context, opts ...FilterOption) ([]*User, error) {
+	var f filters
+	for _, opt := range opts {
+		opt(&f)
+	}
+
+	query := "SELECT id, " + userFields + " FROM users" + f.formatWhereString()
+	rows, err := t.pool.Query(ctx, query, f.queryList()...)
 	if err != nil {
 		t.logger.Error("msg", "failed to query db for users", "error", err)
 
@@ -55,8 +124,8 @@ func (t *UserTable) GetUsers(ctx context.Context) ([]*User, error) {
 	for rows.Next() {
 		var u User
 		err = rows.Scan(
-			&u.ID, &u.Name, &u.FinishYear, &u.Professor, &u.TA, &u.StudentLeadership,
-			&u.AlumniBoard,
+			&u.ID, &u.Name, &u.NameKeyHash, &u.FinishYear, &u.Professor, &u.TA,
+			&u.StudentLeadership, &u.AlumniBoard,
 		)
 		if err != nil {
 			t.logger.Error("msg", "failed to scan user row", "error", err)
@@ -66,7 +135,9 @@ func (t *UserTable) GetUsers(ctx context.Context) ([]*User, error) {
 		out = append(out, &u)
 	}
 
-	t.logger.Debug("msg", "got all users", "count", len(out))
+	logInfo := []any{"msg", "got all users", "count", len(out)}
+	logInfo = append(logInfo, f.logInfo()...)
+	t.logger.Debug(logInfo...)
 
 	return out, nil
 }
@@ -74,8 +145,10 @@ func (t *UserTable) GetUsers(ctx context.Context) ([]*User, error) {
 // GetUser returns the user by ID, if present. If not present, ErrNoUser is returned.
 func (t *UserTable) GetUser(ctx context.Context, id int) (*User, error) {
 	u := User{ID: id}
-	err := t.pool.QueryRow(ctx, "SELECT "+userFields+" FROM users WHERE id=$1", id).
-		Scan(&u.Name, &u.FinishYear, &u.Professor, &u.TA, &u.StudentLeadership, &u.AlumniBoard)
+	err := t.pool.QueryRow(ctx, "SELECT "+userFields+" FROM users WHERE id=$1", id).Scan(
+		&u.Name, &u.NameKeyHash, &u.FinishYear, &u.Professor, &u.TA, &u.StudentLeadership,
+		&u.AlumniBoard,
+	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		t.logger.Info("msg", "user not in database", "id", id)
 
@@ -97,8 +170,8 @@ func (t *UserTable) CreateUser(ctx context.Context, u *User) (int, error) {
 	var newID int
 
 	err := t.pool.QueryRow(
-		ctx, "INSERT INTO users ("+userFields+") VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-		u.Name, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard,
+		ctx, "INSERT INTO users ("+userFields+") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+		u.Name, u.NameKeyHash, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard,
 	).Scan(&newID)
 	if err != nil {
 		t.logger.Error("msg", "failed to create user", "error", err)
@@ -116,7 +189,8 @@ func (t *UserTable) CreateUser(ctx context.Context, u *User) (int, error) {
 func (t *UserTable) UpdateUser(ctx context.Context, u *User) error {
 	tag, err := t.pool.Exec(ctx,
 		"UPDATE users SET "+userSets+" WHERE id=$1",
-		u.ID, u.Name, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard,
+		u.ID, u.Name, u.NameKeyHash, u.FinishYear, u.Professor, u.TA, u.StudentLeadership,
+		u.AlumniBoard,
 	)
 	if err != nil {
 		t.logger.Error("msg", "failed to update user", "id", u.ID, "error", err)

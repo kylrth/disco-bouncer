@@ -5,6 +5,7 @@ debug {"msg":"created new user","id":"2"}
 debug {"msg":"got all users","count":"2"}
 debug {"msg":"updated user","id":"2"}
 debug {"msg":"found user info","id":"2"}
+debug {"msg":"got all users","count":"1","keyHash":"54321"}
 info  {"msg":"no matching user to update","id":"4"}
 info  {"msg":"no matching user to delete","id":"4"}
 debug {"msg":"deleted user","id":"1"}

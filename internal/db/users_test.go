@@ -13,13 +13,19 @@ import (
 	"github.com/pashagolub/pgxmock/v2"
 )
 
-const userFields = "name, finish_year, professor, ta, student_leadership, alumni_board"
-
-var userColumns = []string{"id"}
-
-func init() {
-	userColumns = append(userColumns, strings.Split(userFields, ", ")...)
-}
+var (
+	userColumns = []string{
+		"id",
+		"name",
+		"name_key_hash",
+		"finish_year",
+		"professor",
+		"ta",
+		"student_leadership",
+		"alumni_board",
+	}
+	userFields = strings.Join(userColumns[1:], ", ")
+)
 
 func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing sequential calls
 	t.Parallel()
@@ -36,13 +42,15 @@ func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing seq
 
 	john := db.User{
 		Name:        "John Doe",
+		NameKeyHash: "12345",
 		FinishYear:  2019,
 		AlumniBoard: true,
 	}
 	stephen := db.User{
-		Name:       "Stephen Wolfram",
-		FinishYear: 0,
-		Professor:  true,
+		Name:        "Stephen Wolfram",
+		NameKeyHash: "54321",
+		FinishYear:  0,
+		Professor:   true,
 	}
 
 	// create user John and check data
@@ -78,7 +86,7 @@ func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing seq
 	// add Stephen and get all users
 	mockDB.ExpectQuery("INSERT INTO users").
 		WithArgs(
-			stephen.Name, stephen.FinishYear, stephen.Professor, stephen.TA,
+			stephen.Name, stephen.NameKeyHash, stephen.FinishYear, stephen.Professor, stephen.TA,
 			stephen.StudentLeadership, stephen.AlumniBoard,
 		).
 		WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(2))
@@ -118,6 +126,19 @@ func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing seq
 	diff = cmp.Diff(&stephen, newUser)
 	if diff != "" {
 		t.Error("unexpected Stephen info (-want +got):\n" + diff)
+	}
+
+	// get Stephen by hash
+	willReturnUsers(
+		mockDB.ExpectQuery("SELECT id, "+userFields+" FROM users").WithArgs(stephen.NameKeyHash),
+		true, &stephen)
+	users, err = table.GetUsers(ctx, db.WithKeyHash(stephen.NameKeyHash))
+	if err != nil {
+		t.Errorf("unexpected error from GetUsersByKeyHash: %v", err)
+	}
+	diff = cmp.Diff([]*db.User{&stephen}, users)
+	if diff != "" {
+		t.Error("unexpected users (-want +got):\n" + diff)
 	}
 
 	// update nonexistent user
@@ -167,11 +188,12 @@ type withArgser[T any] interface {
 }
 
 func withUserArgs[T withArgser[T]](u *db.User, mdb T, withID bool) T {
-	args := make([]interface{}, 0, 7)
+	args := make([]interface{}, 0, 8)
 	if withID {
 		args = append(args, u.ID)
 	}
-	args = append(args, u.Name, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard)
+	args = append(args,
+		u.Name, u.NameKeyHash, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard)
 
 	return mdb.WithArgs(args...)
 }
@@ -179,12 +201,14 @@ func withUserArgs[T withArgser[T]](u *db.User, mdb T, withID bool) T {
 func willReturnUsers(mdb *pgxmock.ExpectedQuery, withID bool, users ...*db.User) {
 	rows := make([][]any, len(users))
 	for i, u := range users {
-		args := make([]any, 0, 7)
+		args := make([]any, 0, 8)
 		if withID {
 			args = append(args, u.ID)
 		}
 		args = append(args,
-			u.Name, u.FinishYear, u.Professor, u.TA, u.StudentLeadership, u.AlumniBoard)
+			u.Name, u.NameKeyHash, u.FinishYear, u.Professor, u.TA, u.StudentLeadership,
+			u.AlumniBoard,
+		)
 
 		rows[i] = args
 	}
