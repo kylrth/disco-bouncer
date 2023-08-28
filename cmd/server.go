@@ -47,15 +47,16 @@ var serveCmd = &cobra.Command{
 }
 
 func serve(l log.Logger, pool *pgxpool.Pool) error {
+	aTable := db.NewAdminTable(l, pool)
+	uTable := db.NewUserTable(l, pool)
+
 	app := fiber.New()
 	app.Use(logger.New(logger.Config{Output: os.Stderr}))
-
-	server.AddAuthHandlers(l, app, pool)
-	server.AddCRUDHandlers(l, app, pool)
+	server.AddAuthHandlers(l, app, pool, aTable)
+	server.AddCRUDHandlers(l, app, uTable)
 
 	token := os.Getenv("DISCORD_TOKEN")
-	table := db.NewUserTable(l, pool)
-	bot, err := bouncerbot.New(l, token, table)
+	bot, err := bouncerbot.New(l, token, uTable)
 	if err != nil {
 		return fmt.Errorf("set up Discord bot: %w", err)
 	}

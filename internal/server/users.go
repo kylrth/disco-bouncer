@@ -8,13 +8,10 @@ import (
 
 	"github.com/cobaltspeech/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kylrth/disco-bouncer/internal/db"
 )
 
-func AddCRUDHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool) {
-	table := db.NewUserTable(l, pool)
-
+func AddCRUDHandlers(l log.Logger, app *fiber.App, table *db.UserTable) {
 	app.Get("/api/users", GetAllUsers(l, table))
 	app.Get("/api/users/:id", GetUser(l, table))
 	app.Post("/api/users", CreateUser(l, table))

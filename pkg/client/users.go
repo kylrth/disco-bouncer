@@ -2,11 +2,13 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/kylrth/disco-bouncer/internal/db"
+	"github.com/kylrth/disco-bouncer/pkg/encrypt"
 )
 
 // UserService is used to view and modify the users table on the server.
@@ -97,4 +99,21 @@ func (s *UsersService) DeleteUser(ctx context.Context, id int) error {
 	}
 
 	return s.c.delete(ctx, p)
+}
+
+// Upload uploads a new user to the server. It encrypts u.Name, fills in u.NameKeyHash, and returns
+// the received ID and the encrypted key. The fields of u will be updated.
+func (s *UsersService) Upload(ctx context.Context, u *db.User) (id int, key string, err error) {
+	u.Name, key, err = encrypt.Encrypt(u.Name)
+	if err != nil {
+		return 0, key, fmt.Errorf("encrypt name: %w", err)
+	}
+	u.NameKeyHash, err = encrypt.MD5Hash(key)
+	if err != nil {
+		return 0, key, fmt.Errorf("hash key: %w", err)
+	}
+
+	userID, err := s.CreateUser(ctx, u)
+
+	return userID, key, err
 }

@@ -1,0 +1,19 @@
+debug {"msg":"stored new admin","user":"test"}
+debug {"msg":"successful password check","user":"test"}
+debug {"msg":"created new user","id":"1"}
+debug {"msg":"authenticated access","user":"test","endpoint":"POST /api/users"}
+debug {"msg":"created new user","id":"2"}
+debug {"msg":"authenticated access","user":"test","endpoint":"POST /api/users"}
+debug {"msg":"got all users","count":"1","keyHash":"197012b9fa41c694c7a18624d4beb509a981b49eca5846c9d8284dfc587714ccd41d8cd98f00b204e9800998ecf8427e"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"got all users","count":"1","keyHash":"31a49dc4c86183ce10f39c10bd1a137f6de684e5de401ebc9a8e49e6aa73d605d41d8cd98f00b204e9800998ecf8427e"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"got all users","count":"1","keyHash":"197012b9fa41c694c7a18624d4beb509a981b49eca5846c9d8284dfc587714ccd41d8cd98f00b204e9800998ecf8427e"}
+debug {"msg":"deleted user","id":"1"}
+debug {"msg":"got all users","count":"0","keyHash":"197012b9fa41c694c7a18624d4beb509a981b49eca5846c9d8284dfc587714ccd41d8cd98f00b204e9800998ecf8427e"}
+debug {"msg":"got all users","count":"1","keyHash":"31a49dc4c86183ce10f39c10bd1a137f6de684e5de401ebc9a8e49e6aa73d605d41d8cd98f00b204e9800998ecf8427e"}
+debug {"msg":"deleted user","id":"2"}
+debug {"msg":"got all users","count":"0"}
+debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"got all users","count":"0"}
+debug {"msg":"deleted admin","user":"test"}

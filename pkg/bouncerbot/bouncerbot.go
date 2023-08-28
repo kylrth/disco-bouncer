@@ -29,7 +29,7 @@ type Bot struct {
 
 // New creates a new bouncer bot using the provided bot token, backed by the provided UserTable.
 func New(l log.Logger, token string, users *db.UserTable) (*Bot, error) {
-	return NewWithDecrypter(l, token, tableDecrypter{users})
+	return NewWithDecrypter(l, token, TableDecrypter{users})
 }
 
 // NewWithDecrypter sets up the bot using the provided Decrypter, instead of the default Decrypter
