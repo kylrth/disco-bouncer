@@ -23,3 +23,6 @@ debug {"msg":"found user info","id":"1"}
 debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users/:id"}
 debug {"msg":"got all users","count":"1"}
 debug {"msg":"authenticated access","user":"test","endpoint":"GET /api/users"}
+debug {"msg":"got all users","count":"1"}
+debug {"msg":"deleted user","id":"1"}
+debug {"msg":"deleted admin","user":"test"}

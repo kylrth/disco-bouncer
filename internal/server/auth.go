@@ -14,15 +14,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func AddAuthHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool) {
+func AddAuthHandlers(l log.Logger, app *fiber.App, pool *pgxpool.Pool, table *db.AdminTable) {
 	sessionStore := session.New(session.Config{
 		Storage: postgres.New(postgres.Config{
 			DB:    pool,
 			Table: "sessions",
 		}),
 	})
-
-	table := db.NewAdminTable(l, pool)
 
 	app.Post("/login", Login(l, table, sessionStore))
 	app.Post("/logout", Logout(l, sessionStore))
