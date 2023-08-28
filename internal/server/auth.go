@@ -160,7 +160,7 @@ func AuthMiddleware(l log.Logger, sessionStore *session.Store) fiber.Handler {
 		case string:
 			username = s
 		default:
-			l.Info("msg", "invalid session data", "user", username)
+			l.Info("msg", "invalid session data", "user", s)
 
 			return c.Status(http.StatusUnauthorized).SendString("Invalid session data")
 		}
