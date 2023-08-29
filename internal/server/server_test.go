@@ -390,6 +390,10 @@ func TestUploadAndDecrypt(t *testing.T) { //nolint:cyclop,funlen,gocyclo // long
 	if diff := cmp.Diff(&u1, out); diff != "" {
 		t.Error("unexpected decrypted info (-want +got):\n" + diff)
 	}
+	err = dec.Delete(u1.ID)
+	if err != nil {
+		t.Errorf("unexpected error from Decrypter.Delete: %v", err)
+	}
 
 	// (try again, should get ErrNotFound)
 	_, err = dec.Decrypt(u1Key)
@@ -404,6 +408,10 @@ func TestUploadAndDecrypt(t *testing.T) { //nolint:cyclop,funlen,gocyclo // long
 	u2.Name = u2Name // expect the unecrypted name
 	if diff := cmp.Diff(&u2, out); diff != "" {
 		t.Error("unexpected decrypted info (-want +got):\n" + diff)
+	}
+	err = dec.Delete(u2.ID)
+	if err != nil {
+		t.Errorf("unexpected error from Decrypter.Delete: %v", err)
 	}
 
 	// now it should be empty

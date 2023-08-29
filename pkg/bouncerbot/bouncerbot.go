@@ -46,8 +46,13 @@ func NewWithDecrypter(l log.Logger, token string, d Decrypter) (*Bot, error) {
 		return &b, err
 	}
 
-	b.AddHandler(b.memberJoin)
-	b.AddHandler(b.userDM)
+	dg.Identify.Intents = 0
+
+	b.AddHandler(b.handleMemberJoin)
+	dg.Identify.Intents |= discordgo.IntentGuildMembers
+
+	b.AddHandler(b.handleMessage)
+	dg.Identify.Intents |= discordgo.IntentDirectMessages
 
 	return &b, nil
 }
@@ -57,27 +62,9 @@ func (b *Bot) AddGuildInfoCallback(f func(*GuildInfo)) {
 	b.guildInfoCallbacks = append(b.guildInfoCallbacks, f)
 }
 
-var welcomeMessages = []string{
-	"Welcome to the ACME Discord server! Please send me your unique code here to gain access to " +
-		"the rest of the server.",
-	"By sending your code, you're allowing BYU to give the server admins your real name and the " +
-		"year you finished the senior cohort.",
-	"I'll use this information to set which channels you'll be able to see, and to set your " +
-		"nickname on the server.",
-}
-
-func (b *Bot) memberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+func (b *Bot) handleMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	if b.Guild == nil {
-		roles, err := s.GuildRoles(m.GuildID)
-		if err != nil {
-			b.l.Error("msg", "failed to get guild info", "error", err)
-		}
-
-		b.Guild = GetGuildInfo(b.l, roles, m.GuildID)
-
-		for _, cb := range b.guildInfoCallbacks {
-			cb(b.Guild)
-		}
+		b.setGuildInfo(m.GuildID)
 	}
 
 	channel, err := s.UserChannelCreate(m.User.ID)
@@ -87,16 +74,34 @@ func (b *Bot) memberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		return
 	}
 
-	for _, msg := range welcomeMessages {
-		b.message(channel.ID, "send welcome message", msg)
-	}
-
+	b.message(channel.ID, messageWelcome)
 	b.l.Debug("msg", "sent welcome DM", "user", m.User.ID, "username", m.User.Username)
 }
 
-func (b *Bot) userDM(s *discordgo.Session, m *discordgo.MessageCreate) {
+func (b *Bot) setGuildInfo(guildID string) {
+	roles, err := b.GuildRoles(guildID)
+	if err != nil {
+		b.l.Error("msg", "failed to get guild roles", "error", err)
+
+		return
+	}
+
+	b.Guild = GetGuildInfo(b.l, roles, guildID)
+
+	for _, cb := range b.guildInfoCallbacks {
+		cb(b.Guild)
+	}
+}
+
+func (b *Bot) handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.GuildID != "" {
 		// not a DM
+
+		if b.Guild == nil {
+			// let's get the guild info while we're here
+			b.setGuildInfo(m.GuildID)
+		}
+
 		return
 	}
 	if m.Author.ID == s.State.User.ID {
@@ -108,49 +113,104 @@ func (b *Bot) userDM(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if err != nil {
 		if errors.As(err, &encrypt.ErrBadKey{}) {
 			b.l.Info("msg", "DM did not provide acceptable key", "key", m.Content, "error", err)
-
-			b.message(m.ChannelID, "reply to bad key",
-				"Sorry, that key did not work. Send just the key in plain text, nothing else.",
-			)
+			b.message(m.ChannelID, messageBadKey)
 
 			return
 		}
 		if errors.Is(err, ErrNotFound) {
 			b.l.Info("msg", "key did not decrypt any current user", "key", m.Content, "error", err)
-
-			b.message(m.ChannelID, "reply to unused key",
-				"Sorry, that key did not work. Reach out to the admins for help!",
-			)
+			b.message(m.ChannelID, messageNotFound)
 
 			return
 		}
 
 		b.l.Error("msg", "error decrypting with key", "key", m.Content, "error", err)
+		b.message(m.ChannelID, messageDecryptionError)
 
-		b.message(m.ChannelID, "reply about decryption error",
-			"There was an error on my end (`"+err.Error()+"`). Reach out to the admins for help!",
-		)
+		return
 	}
 
-	b.message(m.ChannelID, "inform about successful decryption",
-		"I found your info! I'll let you in now. :)",
-	)
+	b.message(m.ChannelID, messageSuccessful)
 
 	err = b.admit(u, m.Author.ID)
 	if err != nil {
-		b.l.Error("msg", "failed to admit new user", "error", err)
-		b.message(m.ChannelID, "reply about admit error",
-			"There was an error on my end (`"+err.Error()+"`). Reach out to the admins for help!",
-		)
+		if err.Error() != errNick403 {
+			b.l.Error("msg", "failed to admit new user", "error", err)
+			b.message(m.ChannelID, messageAdmitError)
+
+			return
+		}
+
+		b.message(m.ChannelID, messageNickPerm)
 	}
 
 	b.l.Info("msg", "admitted new user", "userID", m.Author.ID, "username", m.Author.Username)
+
+	// Delete the user now that we've successfully admitted them.
+	err = b.d.Delete(u.ID)
+	if err != nil {
+		b.l.Error("msg", "failed to delete user after admitting", "id", u.ID)
+	}
 }
 
-func (b *Bot) message(channelID, whatFor, msg string) {
-	_, err := b.ChannelMessageSend(channelID, msg)
-	if err != nil {
-		b.l.Error("msg", "failed to "+whatFor, "error", err)
+const (
+	messageWelcome         = "send welcome message"
+	messageSuccessful      = "inform about successful decryption"
+	messageBadKey          = "reply to bad key"
+	messageNotFound        = "reply to unused key"
+	messageDecryptionError = "reply about decryption error"
+	messageNickPerm        = "reply about nickname permissions"
+	messageAdmitError      = "reply about admit error"
+	messageOtherError      = "inform about internal error"
+)
+
+var messages = map[string][]string{
+	messageWelcome: {
+		"Welcome to the ACME Discord server! Please send me your unique code here to gain access " +
+			"to the rest of the server.",
+		"By sending your code, you're allowing BYU to give the server admins your real name and " +
+			"the year you finished the senior cohort.",
+		"I'll use this information to set which channels you'll be able to see, and to set your " +
+			"nickname on the server.",
+	},
+	messageSuccessful: {"I found your info! I'll let you in now. :)"},
+	messageBadKey: {
+		"Sorry, that key did not work. The key should be 64 hexadecimal characters, sent as " +
+			"plain text a single message by itself.",
+		"If you still have trouble, reach out to the admins for help.",
+	},
+	messageNotFound: {"Sorry, that key did not work. Reach out to the admins for help!"},
+	messageDecryptionError: {
+		"There was a decryption error with that key. Reach out to the admins for help!",
+	},
+	messageNickPerm: {
+		"Everything worked except I wasn't able to set your nickname because of your high role.",
+		"Please set your nickname by sending `/nick FIRST LAST` in one of the channels.",
+	},
+	messageAdmitError: {
+		"There was an error while trying to admit you. Reach out to the admins for help!",
+	},
+	messageOtherError: {
+		"There was an error with a message I tried to send. Reach out to the admins to complain!",
+	},
+}
+
+func (b *Bot) message(channelID, whatFor string) {
+	msgs, ok := messages[whatFor]
+	if !ok {
+		b.l.Error("msg", "unknown message type", "type", whatFor)
+		b.message(channelID, messageOtherError)
+
+		return
+	}
+
+	for _, msg := range msgs {
+		_, err := b.ChannelMessageSend(channelID, msg)
+		if err != nil {
+			b.l.Error("msg", "failed to "+whatFor, "error", err)
+
+			break
+		}
 	}
 }
 
@@ -159,9 +219,11 @@ func (b *Bot) admit(u *db.User, dID string) error {
 		return errors.New("guild info not discovered yet")
 	}
 
+	var errs []error
+
 	err := b.GuildMemberNickname(b.Guild.GuildID, dID, u.Name)
 	if err != nil {
-		return fmt.Errorf("set nick: %w", err)
+		errs = append(errs, fmt.Errorf("set nick: %w", err))
 	}
 
 	rolesToAdd := b.Guild.GetRoleIDsForUser(b.l, u)
@@ -169,14 +231,16 @@ func (b *Bot) admit(u *db.User, dID string) error {
 	for _, roleID := range rolesToAdd {
 		err = b.GuildMemberRoleAdd(b.Guild.GuildID, dID, roleID)
 		if err != nil {
-			return fmt.Errorf("set role: %w", err)
+			errs = append(errs, fmt.Errorf("set role '%s': %w", roleID, err))
 		}
 	}
 
 	err = b.GuildMemberRoleRemove(b.Guild.GuildID, dID, b.Guild.NewbieRole)
 	if err != nil {
-		return fmt.Errorf("remove newbie role: %w", err)
+		errs = append(errs, fmt.Errorf("remove newbie role: %w", err))
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
+
+const errNick403 = `set nick: HTTP 403 Forbidden, {"message": "Missing Permissions", "code": 50013}`

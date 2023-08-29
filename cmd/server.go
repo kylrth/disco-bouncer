@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/cobaltspeech/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -93,6 +94,11 @@ func addGuildInfo(l log.Logger, bot *bouncerbot.Bot) error {
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			l.Info("msg", "guild info file does not exist")
+
+			// We'll set the bot to listen for guild messages this time, so we can retrieve the
+			// guild info as soon as possible.
+			bot.Identify.Intents |= discordgo.IntentGuildMessages
+			// We'll give the bot a callback that saves the guild info to disk once it's received.
 			bot.AddGuildInfoCallback(saveGuildInfo(l))
 
 			return nil
