@@ -3,6 +3,7 @@ package encrypt_test
 import (
 	crand "crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -184,5 +185,19 @@ func TestFromJS(t *testing.T) {
 	}
 	if diff := cmp.Diff(plaintext, out); diff != "" {
 		t.Error("unexpected output (-want +got):\n" + diff)
+	}
+}
+
+func TestDecrypt_Errors(t *testing.T) {
+	t.Parallel()
+
+	_, err := encrypt.Decrypt("asdfjkl", key)
+	if !errors.As(err, &encrypt.ErrBadCiphertext{}) {
+		t.Errorf("error did not match ErrBadCiphertext: %v", err)
+	}
+
+	_, err = encrypt.Decrypt(ciphertext, "asdfjkl")
+	if !errors.As(err, &encrypt.ErrBadKey{}) {
+		t.Errorf("error did not match ErrBadKey: %v", err)
 	}
 }

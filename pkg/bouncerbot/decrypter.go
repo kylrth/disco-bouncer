@@ -14,13 +14,17 @@ type Decrypter interface {
 	// Decrypt attempts to decrypt any user info using the key provided. It returns ErrNotFound if
 	// the key did not decrypt anything.
 	Decrypt(key string) (*db.User, error)
+
+	// Delete removes the user info after it's been decrypted and used. It should be called only
+	// after the successful use of data returned by Decrypt.
+	Delete(id int) error
 }
 
 // ErrNotFound is returned by a Decrypter if the key did not decrypt any info.
 var ErrNotFound = errors.New("user info not found")
 
 // TableDecrypter implements Decrypter by using the key to attempt to decrypt all the users in the
-// database. If the user is found, it is deleted from the table.
+// database.
 type TableDecrypter struct {
 	Table *db.UserTable
 }
@@ -28,7 +32,7 @@ type TableDecrypter struct {
 func (d TableDecrypter) Decrypt(key string) (*db.User, error) {
 	keyHash, err := encrypt.MD5Hash(key)
 	if err != nil {
-		return nil, err
+		return nil, encrypt.NewErrBadKey(err)
 	}
 
 	users, err := d.Table.GetUsers(context.Background(), db.WithKeyHash(keyHash))
@@ -47,14 +51,12 @@ func (d TableDecrypter) Decrypt(key string) (*db.User, error) {
 			continue
 		}
 
-		// Delete the user from the table.
-		err = d.Table.DeleteUser(context.Background(), user.ID)
-		if err != nil {
-			return user, fmt.Errorf("delete user after decryption: %w", err)
-		}
-
 		return user, nil
 	}
 
 	return nil, ErrNotFound
+}
+
+func (d TableDecrypter) Delete(id int) error {
+	return d.Table.DeleteUser(context.Background(), id)
 }

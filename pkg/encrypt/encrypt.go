@@ -101,6 +101,11 @@ type ErrBadKey struct {
 	error
 }
 
+// NewErrBadKey wraps the given error to signify that this error was caused by a bad key.
+func NewErrBadKey(wrap error) ErrBadKey {
+	return ErrBadKey{wrap}
+}
+
 // ErrInauthenticated is returned when the key was not the correct one for the ciphertext.
 type ErrInauthenticated struct {
 	error
