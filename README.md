@@ -39,7 +39,7 @@ If you want to run the server without turning on the Discord bot, set `DISCORD_T
 
 ## using the client
 
-Before using the client, you need to create a new admin:
+Before using the client, you (or the server admin) need to create a new admin account:
 
 ```sh
 docker-compose exec discobouncer /bouncer admin setpass testing ThisIsATest
