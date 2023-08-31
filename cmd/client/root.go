@@ -32,6 +32,7 @@ func init() {
 		uploadCmd,
 		getCmd,
 		deleteCmd,
+		changePassCmd,
 	)
 
 	rootCmd.PersistentFlags().IntVarP(&verbosity, "verbosity", "v", 2, "set verbosity (1-4)")
