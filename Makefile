@@ -46,15 +46,15 @@ ARCHES := amd64 arm64
 
 $(RELEASEDIR)/bouncer-client-linux-%: $(GO_FILES)
 	mkdir -p $(RELEASEDIR)
-	GOOS=linux GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-linux-$* ./cmd
+	GOOS=linux GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-linux-$* ./cmd/client
 
 $(RELEASEDIR)/bouncer-client-darwin-%: $(GO_FILES)
 	mkdir -p $(RELEASEDIR)
-	GOOS=darwin GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-darwin-$* ./cmd
+	GOOS=darwin GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-darwin-$* ./cmd/client
 
 $(RELEASEDIR)/bouncer-client-windows-%.exe: $(GO_FILES)
 	mkdir -p $(RELEASEDIR)
-	GOOS=windows GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-windows-$*.exe ./cmd
+	GOOS=windows GOARCH=$* go build -o $(RELEASEDIR)/bouncer-client-windows-$*.exe ./cmd/client
 
 .PHONY: release
 release: $(foreach arch,$(ARCHES),$(RELEASEDIR)/bouncer-client-linux-$(arch) $(RELEASEDIR)/bouncer-client-darwin-$(arch) $(RELEASEDIR)/bouncer-client-windows-$(arch).exe)
