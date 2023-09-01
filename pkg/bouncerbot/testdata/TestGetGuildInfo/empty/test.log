@@ -1,5 +1,5 @@
-error {"msg":"role info not found","role":"Professor"}
+error {"msg":"role info not found","role":"professor"}
 error {"msg":"role info not found","role":"TA"}
-error {"msg":"role info not found","role":"Student Leadership"}
-error {"msg":"role info not found","role":"Alumni Board"}
+error {"msg":"role info not found","role":"student leadership"}
+error {"msg":"role info not found","role":"alumni board"}
 error {"msg":"role info not found","role":"newbie"}

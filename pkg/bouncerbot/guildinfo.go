@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	professorRole         = "Professor"
+	professorRole         = "professor"
 	taRole                = "TA"
-	studentLeadershipRole = "Student Leadership"
-	alumniBoardRole       = "Alumni Board"
+	studentLeadershipRole = "student leadership"
+	alumniBoardRole       = "alumni board"
 	newbieRole            = "newbie"
 )
 

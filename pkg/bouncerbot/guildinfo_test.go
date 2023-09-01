@@ -30,7 +30,7 @@ var (
 	}
 	profRole = discordgo.Role{
 		ID:   "e",
-		Name: "Professor",
+		Name: "professor",
 	}
 	taRole = discordgo.Role{
 		ID:   "f",
@@ -38,11 +38,11 @@ var (
 	}
 	slRole = discordgo.Role{
 		ID:   "g",
-		Name: "Student Leadership",
+		Name: "student leadership",
 	}
 	boardRole = discordgo.Role{
 		ID:   "h",
-		Name: "Alumni Board",
+		Name: "alumni board",
 	}
 	newbieRole = discordgo.Role{
 		ID:   "i",
