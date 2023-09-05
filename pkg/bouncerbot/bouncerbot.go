@@ -176,22 +176,22 @@ var messages = map[string][]string{
 	messageSuccessful: {"I found your info! I'll let you in now. :)"},
 	messageBadKey: {
 		"Sorry, that key did not work. The key should be 64 hexadecimal characters, sent as " +
-			"plain text a single message by itself.",
-		"If you still have trouble, reach out to the admins for help.",
+			"plain text in a single message by itself.",
+		"If you still have trouble, ask for help in the waiting room channel.",
 	},
-	messageNotFound: {"Sorry, that key did not work. Reach out to the admins for help!"},
+	messageNotFound: {"Sorry, that key did not work. Ask for help in the waiting room channel!"},
 	messageDecryptionError: {
-		"There was a decryption error with that key. Reach out to the admins for help!",
+		"There was a decryption error with that key. Ask for help in the waiting room channel!",
 	},
 	messageNickPerm: {
 		"Everything worked except I wasn't able to set your nickname because of your high role.",
 		"Please set your nickname by sending `/nick FIRST LAST` in one of the channels.",
 	},
 	messageAdmitError: {
-		"There was an error while trying to admit you. Reach out to the admins for help!",
+		"There was an error while trying to admit you. Ask for help in the waiting room channel!",
 	},
 	messageOtherError: {
-		"There was an error with a message I tried to send. Reach out to the admins to complain!",
+		"There was an error with a message I tried to send. Complain in the waiting room channel!",
 	},
 }
 
