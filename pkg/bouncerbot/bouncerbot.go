@@ -221,23 +221,23 @@ func (b *Bot) admit(u *db.User, dID string) error {
 
 	var errs []error
 
-	err := b.GuildMemberNickname(b.Guild.GuildID, dID, u.Name)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("set nick: %w", err))
-	}
-
 	rolesToAdd := b.Guild.GetRoleIDsForUser(b.l, u)
 
 	for _, roleID := range rolesToAdd {
-		err = b.GuildMemberRoleAdd(b.Guild.GuildID, dID, roleID)
+		err := b.GuildMemberRoleAdd(b.Guild.GuildID, dID, roleID)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("set role '%s': %w", roleID, err))
 		}
 	}
 
-	err = b.GuildMemberRoleRemove(b.Guild.GuildID, dID, b.Guild.NewbieRole)
+	err := b.GuildMemberRoleRemove(b.Guild.GuildID, dID, b.Guild.NewbieRole)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("remove newbie role: %w", err))
+	}
+
+	err = b.GuildMemberNickname(b.Guild.GuildID, dID, u.Name)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("set nick: %w", err))
 	}
 
 	return errors.Join(errs...)
