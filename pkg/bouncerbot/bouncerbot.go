@@ -144,7 +144,11 @@ func (b *Bot) handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		b.message(m.ChannelID, messageNickPerm)
 	}
 
-	b.l.Info("msg", "admitted new user", "userID", m.Author.ID, "username", m.Author.Username)
+	b.l.Info(
+		"msg", "admitted new user", "userID", m.Author.ID, "username", m.Author.Username,
+		"name", u.Name, "finishYear", u.FinishYear, "isProf", u.Professor, "isTA", u.TA,
+		"isSL", u.StudentLeadership, "isAB", u.AlumniBoard,
+	)
 
 	// Delete the user now that we've successfully admitted them.
 	err = b.d.Delete(u.ID)
