@@ -176,6 +176,9 @@ var messages = map[string][]string{
 			"the year you finished the senior cohort.",
 		"I'll use this information to set which channels you'll be able to see, and to set your " +
 			"nickname on the server.",
+		"If you're new to Discord, don't send me the code until you've set a password for your " +
+			"new account! Otherwise, you'll lose access once you close your browser window and " +
+			"your code will not work next time.",
 	},
 	messageSuccessful: {"I found your info! I'll let you in now. :)"},
 	messageBadKey: {
