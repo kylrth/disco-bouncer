@@ -48,6 +48,10 @@ var (
 		ID:   "i",
 		Name: "newbie",
 	}
+	preACMERole = discordgo.Role{
+		ID:   "k",
+		Name: "pre-ACME",
+	}
 	trickyRole = discordgo.Role{
 		ID:   "j",
 		Name: "teehee (l00l)",
@@ -68,7 +72,7 @@ func TestGetGuildInfo(t *testing.T) {
 		"everything": {
 			[]*discordgo.Role{
 				&adminRole, &cohort2016, &cohort2019, &cohort2022, &profRole, &taRole, &slRole,
-				&boardRole, &newbieRole,
+				&boardRole, &newbieRole, &preACMERole,
 			},
 			bouncerbot.GuildInfo{
 				GuildID:               guildID,
@@ -77,6 +81,7 @@ func TestGetGuildInfo(t *testing.T) {
 				StudentLeadershipRole: slRole.ID,
 				AlumniBoardRole:       boardRole.ID,
 				NewbieRole:            newbieRole.ID,
+				PreACMERole:           preACMERole.ID,
 				RolesByYear: map[int]string{
 					2016: cohort2016.ID, 2019: cohort2019.ID, 2022: cohort2022.ID,
 				},
@@ -85,12 +90,13 @@ func TestGetGuildInfo(t *testing.T) {
 		"missingSome": {
 			[]*discordgo.Role{
 				&adminRole, &cohort2016, &cohort2019, &cohort2022, &taRole,
-				&boardRole,
+				&boardRole, &preACMERole,
 			},
 			bouncerbot.GuildInfo{
 				GuildID:         guildID,
 				TARole:          taRole.ID,
 				AlumniBoardRole: boardRole.ID,
+				PreACMERole:     preACMERole.ID,
 				RolesByYear: map[int]string{
 					2016: cohort2016.ID, 2019: cohort2019.ID, 2022: cohort2022.ID,
 				},
@@ -99,7 +105,7 @@ func TestGetGuildInfo(t *testing.T) {
 		"tricky": {
 			[]*discordgo.Role{
 				&adminRole, &trickyRole, &profRole, &taRole, &slRole,
-				&boardRole, &newbieRole,
+				&boardRole, &newbieRole, &preACMERole,
 			},
 			bouncerbot.GuildInfo{
 				GuildID:               guildID,
@@ -108,6 +114,7 @@ func TestGetGuildInfo(t *testing.T) {
 				StudentLeadershipRole: slRole.ID,
 				AlumniBoardRole:       boardRole.ID,
 				NewbieRole:            newbieRole.ID,
+				PreACMERole:           preACMERole.ID,
 			},
 		},
 	}

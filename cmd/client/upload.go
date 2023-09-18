@@ -31,6 +31,8 @@ header below:
 
 If no data is provided on stdin, the information will be prompted for in the terminal.
 
+The finish year may be set to -1 if the user is pre-ACME.
+
 As users are uploaded, the name and key will be printed to stdout like this:
 
 	id,name,key
@@ -134,7 +136,7 @@ func promptUser(c chan<- *db.User) { //nolint:cyclop // it's not bad
 		var err error
 
 		set := false
-		fmt.Fprint(os.Stderr, "Finish year: ")
+		fmt.Fprint(os.Stderr, "Finish year (-1 for pre-ACME): ")
 		for scanner.Scan() {
 			u.FinishYear, err = strconv.Atoi(scanner.Text())
 			if err == nil {
