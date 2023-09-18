@@ -3,3 +3,4 @@ error {"msg":"role info not found","role":"TA"}
 error {"msg":"role info not found","role":"student leadership"}
 error {"msg":"role info not found","role":"alumni board"}
 error {"msg":"role info not found","role":"newbie"}
+error {"msg":"role info not found","role":"pre-ACME"}

@@ -14,6 +14,7 @@ const (
 	studentLeadershipRole = "student leadership"
 	alumniBoardRole       = "alumni board"
 	newbieRole            = "newbie"
+	preACMERole           = "pre-ACME"
 )
 
 // GuildInfo contains IDs necessary for the bot to interact with roles and users in the guild.
@@ -25,6 +26,7 @@ type GuildInfo struct {
 	StudentLeadershipRole string `json:"student_leadership_role"`
 	AlumniBoardRole       string `json:"alumni_board_role"`
 	NewbieRole            string `json:"newbie_role"`
+	PreACMERole           string `json:"preacme_role"`
 
 	RolesByYear map[int]string `json:"roles_by_year"`
 }
@@ -53,6 +55,8 @@ func GetGuildInfo(l log.Logger, roles []*discordgo.Role, guildID string) *GuildI
 			out.AlumniBoardRole = role.ID
 		case newbieRole:
 			out.NewbieRole = role.ID
+		case preACMERole:
+			out.PreACMERole = role.ID
 		}
 	}
 
@@ -61,6 +65,7 @@ func GetGuildInfo(l log.Logger, roles []*discordgo.Role, guildID string) *GuildI
 	checkRoleFilled(l, out.StudentLeadershipRole, studentLeadershipRole)
 	checkRoleFilled(l, out.AlumniBoardRole, alumniBoardRole)
 	checkRoleFilled(l, out.NewbieRole, newbieRole)
+	checkRoleFilled(l, out.PreACMERole, preACMERole)
 
 	return &out
 }
@@ -99,6 +104,8 @@ func (i *GuildInfo) GetRoleIDsForUser(l log.Logger, u *db.User) []string {
 		} else {
 			l.Info("msg", "no role for finish year", "finishYear", u.FinishYear)
 		}
+	} else if u.FinishYear == -1 {
+		roleIDs = append(roleIDs, i.PreACMERole)
 	}
 
 	if u.Professor {
