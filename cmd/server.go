@@ -84,22 +84,25 @@ func serve(l log.Logger, pool *pgxpool.Pool) error {
 	}()
 	l.Info("msg", "started bot; press Ctrl+C to exit")
 
+	server.AddDiscordHandlers(l, app, bot)
+
 	return app.Listen(":80")
 }
 
 const guildInfoFile = "/data/guildinfo.json"
 
 func addGuildInfo(l log.Logger, bot *bouncerbot.Bot) error {
+	// We'll give the bot a callback that saves the guild info to disk whenever it changes.
+	bot.AddGuildInfoCallback(saveGuildInfo(l))
+
 	b, err := os.ReadFile(guildInfoFile)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			l.Info("msg", "guild info file does not exist")
+			l.Info("msg", "guild info file does not exist; listening for guild messages as well")
 
 			// We'll set the bot to listen for guild messages this time, so we can retrieve the
 			// guild info as soon as possible.
 			bot.Identify.Intents |= discordgo.IntentGuildMessages
-			// We'll give the bot a callback that saves the guild info to disk once it's received.
-			bot.AddGuildInfoCallback(saveGuildInfo(l))
 
 			return nil
 		}
@@ -114,7 +117,9 @@ func addGuildInfo(l log.Logger, bot *bouncerbot.Bot) error {
 		return err
 	}
 
-	bot.Guild = &info
+	// just grab up-to-date info from Discord
+	// This will also call the callback we just added to update the guild info on disk
+	bot.GetGuildInfo(info.GuildID)
 
 	return nil
 }
@@ -132,5 +137,7 @@ func saveGuildInfo(l log.Logger) func(*bouncerbot.GuildInfo) {
 		if err != nil {
 			l.Error("msg", "failed to write guild info file", "error", err)
 		}
+
+		l.Debug("msg", "wrote guild info to file")
 	}
 }

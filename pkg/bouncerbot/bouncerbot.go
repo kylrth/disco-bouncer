@@ -4,6 +4,7 @@ package bouncerbot
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/cobaltspeech/log"
@@ -15,14 +16,15 @@ import (
 // is determined by attempting to decrypt the names in the database using the code as the key. If
 // the decryption is successful, the user is given the name as a server nickname and the appropriate
 // roles are assigned.
+//
+// Currently the bot does not support serving more than one guild.
 type Bot struct {
 	*discordgo.Session
 	l log.Logger
 	d Decrypter
 
-	// If left blank, this info is set when the first user joins the server. Currently the bot does
-	// not support serving more than one guild.
-	Guild *GuildInfo
+	gi     *GuildInfo
+	giLock sync.RWMutex
 
 	guildInfoCallbacks []func(*GuildInfo)
 }
@@ -54,17 +56,30 @@ func NewWithDecrypter(l log.Logger, token string, d Decrypter) (*Bot, error) {
 	b.AddHandler(b.handleMessage)
 	dg.Identify.Intents |= discordgo.IntentDirectMessages
 
+	b.AddHandler(b.handleRoleCreate)
+	b.AddHandler(b.handleRoleUpdate)
+	b.AddHandler(b.handleRoleDelete)
+	dg.Identify.Intents |= discordgo.IntentGuilds
+
 	return &b, nil
 }
 
-// AddGuildInfoCallback ensures f will be called when the b.Guild is filled in.
+// AddGuildInfoCallback ensures f will be called when the guild info is filled in. A read lock will
+// be held while the callbacks are called.
 func (b *Bot) AddGuildInfoCallback(f func(*GuildInfo)) {
 	b.guildInfoCallbacks = append(b.guildInfoCallbacks, f)
 }
 
+func (b *Bot) guildInfoIsNil() bool {
+	b.giLock.RLock()
+	defer b.giLock.RUnlock()
+
+	return b.gi == nil
+}
+
 func (b *Bot) handleMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
-	if b.Guild == nil {
-		b.setGuildInfo(m.GuildID)
+	if b.guildInfoIsNil() {
+		b.GetGuildInfo(m.GuildID)
 	}
 
 	channel, err := s.UserChannelCreate(m.User.ID)
@@ -78,7 +93,7 @@ func (b *Bot) handleMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd
 	b.l.Debug("msg", "sent welcome DM", "user", m.User.ID, "username", m.User.Username)
 }
 
-func (b *Bot) setGuildInfo(guildID string) {
+func (b *Bot) GetGuildInfo(guildID string) {
 	roles, err := b.GuildRoles(guildID)
 	if err != nil {
 		b.l.Error("msg", "failed to get guild roles", "error", err)
@@ -86,10 +101,14 @@ func (b *Bot) setGuildInfo(guildID string) {
 		return
 	}
 
-	b.Guild = GetGuildInfo(b.l, roles, guildID)
+	b.giLock.Lock()
+	b.gi = GetGuildInfo(b.l, roles, guildID)
+	b.giLock.Unlock()
 
+	b.giLock.RLock()
+	defer b.giLock.RUnlock()
 	for _, cb := range b.guildInfoCallbacks {
-		cb(b.Guild)
+		cb(b.gi)
 	}
 }
 
@@ -97,9 +116,9 @@ func (b *Bot) handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.GuildID != "" {
 		// not a DM
 
-		if b.Guild == nil {
+		if b.guildInfoIsNil() {
 			// let's get the guild info while we're here
-			b.setGuildInfo(m.GuildID)
+			b.GetGuildInfo(m.GuildID)
 		}
 
 		return
@@ -222,27 +241,31 @@ func (b *Bot) message(channelID, whatFor string) {
 }
 
 func (b *Bot) admit(u *db.User, dID string) error {
-	if b.Guild == nil {
+	if b.guildInfoIsNil() {
 		return errors.New("guild info not discovered yet")
 	}
 
 	var errs []error
 
-	rolesToAdd := b.Guild.GetRoleIDsForUser(b.l, u)
+	b.giLock.RLock()
+	rolesToAdd := b.gi.GetRoleIDsForUser(b.l, u)
+	guildID := b.gi.GuildID
+	newbieRole := b.gi.NewbieRole
+	b.giLock.RUnlock()
 
 	for _, roleID := range rolesToAdd {
-		err := b.GuildMemberRoleAdd(b.Guild.GuildID, dID, roleID)
+		err := b.GuildMemberRoleAdd(guildID, dID, roleID)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("set role '%s': %w", roleID, err))
 		}
 	}
 
-	err := b.GuildMemberRoleRemove(b.Guild.GuildID, dID, b.Guild.NewbieRole)
+	err := b.GuildMemberRoleRemove(guildID, dID, newbieRole)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("remove newbie role: %w", err))
 	}
 
-	err = b.GuildMemberNickname(b.Guild.GuildID, dID, u.Name)
+	err = b.GuildMemberNickname(guildID, dID, u.Name)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("set nick: %w", err))
 	}
@@ -251,3 +274,18 @@ func (b *Bot) admit(u *db.User, dID string) error {
 }
 
 const errNick403 = `set nick: HTTP 403 Forbidden, {"message": "Missing Permissions", "code": 50013}`
+
+func (b *Bot) handleRoleCreate(_ *discordgo.Session, m *discordgo.GuildRoleCreate) {
+	b.l.Info("msg", "role created; updating guild info", "id", m.Role.ID, "name", m.Role.Name)
+	b.GetGuildInfo(m.GuildID)
+}
+
+func (b *Bot) handleRoleUpdate(_ *discordgo.Session, m *discordgo.GuildRoleUpdate) {
+	b.l.Info("msg", "role updated; updating guild info", "id", m.Role.ID, "name", m.Role.Name)
+	b.GetGuildInfo(m.GuildID)
+}
+
+func (b *Bot) handleRoleDelete(_ *discordgo.Session, m *discordgo.GuildRoleDelete) {
+	b.l.Info("msg", "role deleted; updating guild info", "id", m.RoleID)
+	b.GetGuildInfo(m.GuildID)
+}

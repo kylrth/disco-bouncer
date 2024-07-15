@@ -18,15 +18,15 @@ var (
 	}
 	cohort2016 = discordgo.Role{
 		ID:   "b",
-		Name: "𝛽 (2016)",
+		Name: "2016 𝛽",
 	}
 	cohort2019 = discordgo.Role{
 		ID:   "c",
-		Name: "𝜀 (2019)",
+		Name: "2019 𝜀",
 	}
 	cohort2022 = discordgo.Role{
 		ID:   "d",
-		Name: "𝜃 (2022)",
+		Name: "2022 𝜃",
 	}
 	profRole = discordgo.Role{
 		ID:   "e",
@@ -50,7 +50,7 @@ var (
 	}
 	preACMERole = discordgo.Role{
 		ID:   "k",
-		Name: "pre-ACME",
+		Name: "pre-core ACME",
 	}
 	trickyRole = discordgo.Role{
 		ID:   "j",
@@ -170,6 +170,10 @@ func TestGuildInfo_GetRoleIDsForUser(t *testing.T) {
 		"prof": {
 			&db.User{Professor: true},
 			[]string{profRole.ID},
+		},
+		"pre-core": {
+			&db.User{},
+			[]string{preACMERole.ID},
 		},
 	}
 
