@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"testing"
@@ -34,12 +34,12 @@ func ExampleEncrypt() {
 func TestRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			t.Parallel()
 
 			// get a random string of length between 8 and 1024
-			length := rand.Intn(1024-8) + 8 //nolint:gosec // just a test
+			length := rand.IntN(1024-8) + 8 //nolint:gosec // just a test
 			b := make([]byte, length)
 			_, err := crand.Read(b)
 			if err != nil {
@@ -81,7 +81,6 @@ func TestEncryptEdges(t *testing.T) {
 	}
 
 	for name, s := range cases {
-		s := s
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			roundTrip(t, s)
@@ -115,7 +114,6 @@ func TestDecrypt(t *testing.T) {
 		"WrongValidKey": {altKey, "cipher: message authentication failed"},
 	}
 	for name, c := range badKeyTests {
-		c := c
 		t.Run("badKey"+name, func(t *testing.T) {
 			t.Parallel()
 
@@ -133,7 +131,6 @@ func TestDecrypt(t *testing.T) {
 		"WrongValidCipher": {altCipher, "cipher: message authentication failed"},
 	}
 	for name, c := range badCipherTests {
-		c := c
 		t.Run("badCipher"+name, func(t *testing.T) {
 			t.Parallel()
 
@@ -151,8 +148,7 @@ const (
 	nonceLength = 12
 	plaintext   = "Hello, World!"
 	ciphertext  = "7486f7b175afecaa48f7e36c8148cfa748ce5d728f1320d8a5d2e5a9a06fa77e94ffd1d0cae76cb583"
-	//nolint:gosec // just for the test
-	key = "9fa17471ebcf4183d9fb76cde245acb09250bb5c31d2e8f51d5e8a6eb951eb1a"
+	key         = "9fa17471ebcf4183d9fb76cde245acb09250bb5c31d2e8f51d5e8a6eb951eb1a"
 )
 
 func TestMatchJS(t *testing.T) {

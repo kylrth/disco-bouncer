@@ -42,7 +42,7 @@ The key is a hex string that should be provided to the user. They will be able t
 access to the Discord server.
 `,
 	Args: cobra.NoArgs,
-	Run: withLAndC(func(l log.Logger, c *client.Client, args []string) error {
+	Run: withLAndC(func(l log.Logger, c *client.Client, _ []string) error {
 		return upload(l, c)
 	}),
 }

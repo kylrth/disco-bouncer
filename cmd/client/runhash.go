@@ -12,7 +12,7 @@ var runhashCmd = &cobra.Command{
 	Use:   "runhash [KEYS...]",
 	Short: "Compute the MD5 hash of the key exactly as is done on the server",
 	Args:  cobra.ArbitraryArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		err := runhash(args)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)

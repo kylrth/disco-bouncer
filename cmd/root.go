@@ -32,7 +32,7 @@ func init() {
 }
 
 func withLogger(f func(log.Logger, []string) error) func(*cobra.Command, []string) {
-	return func(cmd *cobra.Command, args []string) {
+	return func(_ *cobra.Command, args []string) {
 		l := log.NewLeveledLogger(log.WithFilterLevel(level.Verbosity(verbosity)))
 
 		err := f(l, args)
