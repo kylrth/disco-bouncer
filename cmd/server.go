@@ -42,7 +42,7 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve the disco-bouncer data manager API",
 	Args:  cobra.NoArgs,
-	Run: withLAndDB(func(l log.Logger, p *pgxpool.Pool, args []string) error {
+	Run: withLAndDB(func(l log.Logger, p *pgxpool.Pool, _ []string) error {
 		return serve(l, p)
 	}),
 }

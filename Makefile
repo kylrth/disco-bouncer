@@ -4,7 +4,7 @@ BINDIR := bin
 
 ## LINT
 
-LINTER_VERSION := 1.54.2
+LINTER_VERSION := 1.59.1
 LINTER := $(BINDIR)/golangci-lint_$(LINTER_VERSION)
 DEV_OS := $(shell uname -s | tr A-Z a-z)
 
@@ -16,7 +16,7 @@ $(LINTER):
 
 .PHONY: lint
 lint: $(LINTER)
-	$(LINTER) run --deadline=2m
+	$(LINTER) run
 
 ## TEST
 

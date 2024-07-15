@@ -9,10 +9,10 @@ import (
 
 // PgxIface allows the Table objects to use anything that looks like a *pgxpool.Pool.
 type PgxIface interface {
-	Begin(context.Context) (pgx.Tx, error)
-	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
-	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
-	Ping(context.Context) error
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	Ping(ctx context.Context) error
 	Close()
 }
