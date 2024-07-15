@@ -1,7 +1,8 @@
 package bouncerbot
 
 import (
-	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/cobaltspeech/log"
@@ -14,7 +15,7 @@ const (
 	studentLeadershipRole = "student leadership"
 	alumniBoardRole       = "alumni board"
 	newbieRole            = "newbie"
-	preACMERole           = "pre-ACME"
+	preACMERole           = "pre-core ACME"
 )
 
 // GuildInfo contains IDs necessary for the bot to interact with roles and users in the guild.
@@ -67,26 +68,31 @@ func GetGuildInfo(l log.Logger, roles []*discordgo.Role, guildID string) *GuildI
 	checkRoleFilled(l, out.NewbieRole, newbieRole)
 	checkRoleFilled(l, out.PreACMERole, preACMERole)
 
+	l.Debug("msg", "Collected guild info.", "RolesByYear", out.RolesByYear)
+
 	return &out
 }
 
-func getYearIfPresent(s string) int { // return 0 if not
-	if len(s) < 6 {
-		return 0
+// getYearIfPresent returns "" if the string doesn't start with a year, otherwise it returns up to
+// the first space character " ".
+func getYearIfPresent(s string) string {
+	if len(s) < 4 {
+		return ""
 	}
 
-	substr := s[len(s)-6:]
-
-	if substr[0] != '(' || substr[5] != ')' {
-		return 0
+	// first 4 runes must be a year
+	for _, c := range s[:4] {
+		if !unicode.IsDigit(c) {
+			return ""
+		}
 	}
 
-	out, err := strconv.Atoi(substr[1:5])
-	if err != nil {
-		return 0
+	yearEnd := strings.Index(s, " ")
+	if yearEnd == -1 {
+		return s
 	}
 
-	return out
+	return s[:yearEnd]
 }
 
 func checkRoleFilled(l log.Logger, field, name string) {
