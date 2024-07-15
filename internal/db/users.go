@@ -32,7 +32,7 @@ type User struct {
 	ID                int    `json:"id"`
 	Name              string `json:"name"`
 	NameKeyHash       string `json:"name_key_hash"`
-	FinishYear        int    `json:"finish_year"`
+	FinishYear        string `json:"finish_year"`
 	Professor         bool   `json:"professor"`
 	TA                bool   `json:"ta"`
 	StudentLeadership bool   `json:"student_leadership"`

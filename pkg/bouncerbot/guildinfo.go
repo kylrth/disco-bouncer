@@ -29,7 +29,7 @@ type GuildInfo struct {
 	NewbieRole            string `json:"newbie_role"`
 	PreACMERole           string `json:"preacme_role"`
 
-	RolesByYear map[int]string `json:"roles_by_year"`
+	RolesByYear map[string]string `json:"roles_by_year"`
 }
 
 // GetGuildInfo collects the guild information using the discordgo session.
@@ -37,9 +37,9 @@ func GetGuildInfo(l log.Logger, roles []*discordgo.Role, guildID string) *GuildI
 	var out GuildInfo
 	out.GuildID = guildID
 
-	out.RolesByYear = make(map[int]string)
+	out.RolesByYear = make(map[string]string)
 	for _, role := range roles {
-		if year := getYearIfPresent(role.Name); year != 0 {
+		if year := getYearIfPresent(role.Name); year != "" {
 			out.RolesByYear[year] = role.ID
 
 			continue
@@ -104,13 +104,13 @@ func checkRoleFilled(l log.Logger, field, name string) {
 // GetRoleIDsForUser returns the role IDs that the user should be given.
 func (i *GuildInfo) GetRoleIDsForUser(l log.Logger, u *db.User) []string {
 	roleIDs := []string{}
-	if u.FinishYear > 0 {
+	if u.FinishYear != "" {
 		if role, ok := i.RolesByYear[u.FinishYear]; ok {
 			roleIDs = append(roleIDs, role)
 		} else {
 			l.Info("msg", "no role for finish year", "finishYear", u.FinishYear)
 		}
-	} else if u.FinishYear == -1 {
+	} else if !u.Professor {
 		roleIDs = append(roleIDs, i.PreACMERole)
 	}
 

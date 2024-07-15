@@ -82,8 +82,8 @@ func TestGetGuildInfo(t *testing.T) {
 				AlumniBoardRole:       boardRole.ID,
 				NewbieRole:            newbieRole.ID,
 				PreACMERole:           preACMERole.ID,
-				RolesByYear: map[int]string{
-					2016: cohort2016.ID, 2019: cohort2019.ID, 2022: cohort2022.ID,
+				RolesByYear: map[string]string{
+					"2016": cohort2016.ID, "2019": cohort2019.ID, "2022": cohort2022.ID,
 				},
 			},
 		},
@@ -97,8 +97,8 @@ func TestGetGuildInfo(t *testing.T) {
 				TARole:          taRole.ID,
 				AlumniBoardRole: boardRole.ID,
 				PreACMERole:     preACMERole.ID,
-				RolesByYear: map[int]string{
-					2016: cohort2016.ID, 2019: cohort2019.ID, 2022: cohort2022.ID,
+				RolesByYear: map[string]string{
+					"2016": cohort2016.ID, "2019": cohort2019.ID, "2022": cohort2022.ID,
 				},
 			},
 		},
@@ -145,8 +145,9 @@ func TestGuildInfo_GetRoleIDsForUser(t *testing.T) {
 		StudentLeadershipRole: slRole.ID,
 		AlumniBoardRole:       boardRole.ID,
 		NewbieRole:            newbieRole.ID,
-		RolesByYear: map[int]string{
-			2016: cohort2016.ID, 2019: cohort2019.ID, 2022: cohort2022.ID,
+		PreACMERole:           preACMERole.ID,
+		RolesByYear: map[string]string{
+			"2016": cohort2016.ID, "2019": cohort2019.ID, "2022": cohort2022.ID,
 		},
 	}
 
@@ -156,15 +157,15 @@ func TestGuildInfo_GetRoleIDsForUser(t *testing.T) {
 	}
 	tests := map[string]testCase{
 		"2022": {
-			&db.User{FinishYear: 2022, StudentLeadership: true},
+			&db.User{FinishYear: "2022", StudentLeadership: true},
 			[]string{cohort2022.ID, slRole.ID},
 		},
 		"2021": {
-			&db.User{FinishYear: 2021},
+			&db.User{FinishYear: "2021"},
 			nil,
 		},
 		"TA_alum": {
-			&db.User{FinishYear: 2019, TA: true, AlumniBoard: true},
+			&db.User{FinishYear: "2019", TA: true, AlumniBoard: true},
 			[]string{cohort2019.ID, taRole.ID, boardRole.ID},
 		},
 		"prof": {
