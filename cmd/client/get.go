@@ -176,7 +176,7 @@ func writeUser(w *csv.Writer, us ...*db.User) {
 			strconv.Itoa(u.ID),
 			u.Name,
 			u.NameKeyHash,
-			strconv.Itoa(u.FinishYear),
+			u.FinishYear,
 			csvBool(u.Professor),
 			csvBool(u.TA),
 			csvBool(u.StudentLeadership),

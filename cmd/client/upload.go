@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/cobaltspeech/log"
@@ -116,14 +115,14 @@ func getInputFromStdin(c chan<- *db.User) error {
 	}
 }
 
-func promptUser(c chan<- *db.User) { //nolint:cyclop // it's not bad
+func promptUser(c chan<- *db.User) {
 	scanner := bufio.NewScanner(os.Stdin)
 	defer close(c)
 
 	for {
 		var u db.User
 
-		fmt.Fprint(os.Stderr, "Name (blank to quit): ")
+		fmt.Fprint(os.Stderr, "Name (leave empty to quit): ")
 		if scanner.Scan() {
 			u.Name = scanner.Text()
 			if u.Name == "" {
@@ -133,21 +132,9 @@ func promptUser(c chan<- *db.User) { //nolint:cyclop // it's not bad
 			return
 		}
 
-		var err error
-
-		set := false
-		fmt.Fprint(os.Stderr, "Finish year (-1 for pre-ACME): ")
-		for scanner.Scan() {
-			u.FinishYear, err = strconv.Atoi(scanner.Text())
-			if err == nil {
-				set = true
-
-				break
-			}
-			fmt.Fprintln(os.Stderr, "Invalid year; try again: ")
-		}
-		if !set {
-			fmt.Fprintln(os.Stderr, "unexpected end of input")
+		fmt.Fprint(os.Stderr, "Finish year (leave empty for pre-ACME or prof): ")
+		if scanner.Scan() {
+			u.FinishYear = scanner.Text()
 		}
 
 		fmt.Fprint(os.Stderr, "Professor? (y/N): ")
@@ -194,12 +181,9 @@ func isHeader(line []string) bool {
 func parseUser(line []string) (*db.User, error) {
 	var u db.User
 	u.Name = line[0]
+	u.FinishYear = line[1]
 
 	var err error
-	u.FinishYear, err = strconv.Atoi(line[1])
-	if err != nil {
-		return &u, err
-	}
 	u.Professor, err = parseBool(line[2])
 	if err != nil {
 		return &u, err

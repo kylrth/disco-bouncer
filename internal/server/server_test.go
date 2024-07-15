@@ -244,12 +244,12 @@ func TestAll(t *testing.T) { //nolint:cyclop,funlen,gocyclo // long integration 
 	u1 := db.User{
 		Name:        "John Doe",
 		NameKeyHash: "asdfjkl",
-		FinishYear:  2021,
+		FinishYear:  "2021",
 	}
 	u2 := db.User{
 		Name:        "Jason Mendoza",
 		NameKeyHash: "lkjfdsa",
-		FinishYear:  2019,
+		FinishYear:  "2019",
 		AlumniBoard: true,
 	}
 	u1.ID, err = c.Users.CreateUser(ctx, &u1)
@@ -334,11 +334,11 @@ func TestUploadAndDecrypt(t *testing.T) { //nolint:cyclop,funlen,gocyclo // long
 	const u2Name = "Jason Mendoza"
 	u1 := db.User{
 		Name:       u1Name,
-		FinishYear: 2021,
+		FinishYear: "2021",
 	}
 	u2 := db.User{
 		Name:        u2Name,
-		FinishYear:  2019,
+		FinishYear:  "2019",
 		AlumniBoard: true,
 	}
 	var u1Key, u2Key string

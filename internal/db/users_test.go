@@ -43,13 +43,13 @@ func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing seq
 	john := db.User{
 		Name:        "John Doe",
 		NameKeyHash: "12345",
-		FinishYear:  2019,
+		FinishYear:  "2019",
 		AlumniBoard: true,
 	}
 	stephen := db.User{
 		Name:        "Stephen Wolfram",
 		NameKeyHash: "54321",
-		FinishYear:  0,
+		FinishYear:  "0",
 		Professor:   true,
 	}
 
