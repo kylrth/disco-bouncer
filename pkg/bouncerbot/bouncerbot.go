@@ -289,3 +289,75 @@ func (b *Bot) handleRoleDelete(_ *discordgo.Session, m *discordgo.GuildRoleDelet
 	b.l.Info("msg", "role deleted; updating guild info", "id", m.RoleID)
 	b.GetGuildInfo(m.GuildID)
 }
+
+var (
+	// ErrUnknownYear is returned by Migrate when the specified cohort year doesn't have a role on
+	// the Discord server.
+	ErrUnknownYear = errors.New("unknown cohort year")
+
+	// ErrNoUser is returned by Migrate when the specified user isn't found on the server.
+	ErrNoUser = errors.New("user not found")
+)
+
+// Migrate moves the specified user by name from the pre-ACME role to their new cohort role.
+func (b *Bot) Migrate(name, year string) error {
+	if b.guildInfoIsNil() {
+		b.l.Error(
+			"msg", "failed to migrate user due to missing guild info", "name", name, "year", year)
+
+		return errors.New("guild info not discovered yet")
+	}
+
+	b.giLock.RLock()
+	guildID := b.gi.GuildID
+	preACME := b.gi.PreACMERole
+	cohort, ok := b.gi.RolesByYear[year]
+	b.giLock.RUnlock()
+
+	if !ok {
+		b.l.Info("msg", "requested migration to unknown year", "name", name, "year", year)
+
+		return ErrUnknownYear
+	}
+
+	found, err := b.GuildMembersSearch(guildID, name, 1)
+	if err != nil {
+		b.l.Error("msg", "failed to search for Discord user to migrate", "error", err)
+
+		return fmt.Errorf("search for guild user: %w", err)
+	}
+	if len(found) == 0 {
+		b.l.Info("msg", "found no matching Discord user to migrate", "name", name)
+
+		return ErrNoUser
+	}
+	user := found[0]
+	if user.Nick != name && user.User.Username != name {
+		b.l.Info(
+			"msg", "found inexact match for Discord user migration",
+			"name", name, "foundNick", user.Nick, "foundUsername", user.User.Username)
+
+		return ErrNoUser
+	}
+
+	b.l.Info(
+		"msg", "found matching Discord user for migration",
+		"name", name, "year", year, "user", user.User.ID)
+
+	err = b.GuildMemberRoleAdd(guildID, user.User.ID, cohort)
+	if err != nil {
+		b.l.Error(
+			"msg", "failed to add new cohort role", "year", year, "cohort", cohort, "user", user)
+
+		return fmt.Errorf("add new cohort role: %w", err)
+	}
+
+	err = b.GuildMemberRoleRemove(guildID, user.User.ID, preACME)
+	if err != nil {
+		b.l.Error("msg", "failed to remove pre-ACME role", "user", user)
+
+		return fmt.Errorf("remove pre-ACME role: %w", err)
+	}
+
+	return nil
+}

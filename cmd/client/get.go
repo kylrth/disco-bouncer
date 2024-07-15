@@ -55,7 +55,7 @@ func init() {
 	)
 	getCmd.Flags().BoolVar(
 		&useKeys, "keys", false, "treat arguments as keys to search with, instead of IDs. The "+
-			"keys are then used to decrypt the names.",
+			"keys are then used to decrypt the names. The keys are *never* sent to the server.",
 	)
 }
 
@@ -94,15 +94,15 @@ func get(c *client.Client, ids []string) error {
 	}
 
 	if useKeys {
-		return getByKeys(w, c, ids)
+		return getByKeys(context.Background(), w, c, ids)
 	}
 
 	return getByIDs(w, c, ids)
 }
 
-func getByKeys(w *csv.Writer, c *client.Client, keys []string) error {
+func getByKeys(ctx context.Context, w *csv.Writer, c *client.Client, keys []string) error {
 	for _, key := range keys {
-		user, err := getWithKey(c, key)
+		user, err := getWithKey(ctx, c, key)
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				fmt.Fprintf(os.Stderr, "did not find any users encrypted with key '%s'\n", key)
@@ -121,13 +121,13 @@ func getByKeys(w *csv.Writer, c *client.Client, keys []string) error {
 
 var ErrNotFound = errors.New("not found")
 
-func getWithKey(c *client.Client, key string) (*db.User, error) {
+func getWithKey(ctx context.Context, c *client.Client, key string) (*db.User, error) {
 	hash, err := encrypt.MD5Hash(key)
 	if err != nil {
 		return nil, err
 	}
 
-	users, err := c.Users.GetAllUsers(context.Background(), client.WithKeyHash(hash))
+	users, err := c.Users.GetAllUsers(ctx, client.WithKeyHash(hash))
 	if err != nil {
 		return nil, err
 	}
