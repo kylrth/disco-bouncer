@@ -21,8 +21,9 @@ type Client struct {
 	baseURL string
 	client  *http.Client
 
-	Admin AdminService
-	Users UsersService
+	Admin   AdminService
+	Users   UsersService
+	Discord DiscordService
 }
 
 // NewClient creates a new client that sends requests to the given URL.
@@ -41,6 +42,7 @@ func NewClient(baseURL string) (*Client, error) {
 	}
 	c.Admin = AdminService{&c}
 	c.Users = UsersService{&c}
+	c.Discord = DiscordService{&c}
 
 	return &c, nil
 }

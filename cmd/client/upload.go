@@ -21,7 +21,7 @@ var uploadCmd = &cobra.Command{
 	Short: "Upload user information",
 	Long: `Upload user information to the server, encrypting the name field and then printing the keys.
 
-The user info is accepted as CSV format on stdin. The first line may optionally be exactly the
+The user info is accepted in CSV format on stdin. The first line may optionally be exactly the
 header below:
 
 	name,finish_year,professor,ta,student_leadership,alumni_board
@@ -103,7 +103,7 @@ func getInputFromStdin(c chan<- *db.User) error {
 		}
 		lineNum++
 
-		if lineNum == 1 && isHeader(line) {
+		if lineNum == 1 && isUploadHeader(line) {
 			continue
 		}
 
@@ -169,7 +169,7 @@ func promptUser(c chan<- *db.User) {
 	}
 }
 
-func isHeader(line []string) bool {
+func isUploadHeader(line []string) bool {
 	return line[0] == "name" &&
 		line[1] == "finish_year" &&
 		line[2] == "professor" &&
