@@ -14,10 +14,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version-file: 'go.mod'
 
@@ -29,7 +29,7 @@ jobs:
       run: echo "version=$(grep 'LINTER_VERSION :=' Makefile | awk '{print $3}')" > $GITHUB_OUTPUT
 
     - name: lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v6
       with:
         version: v${{ steps.linter-version.outputs.version }}
         args: --timeout=15m
@@ -49,7 +49,7 @@ jobs:
     needs: [test]
     services:
       dind:
-        image: docker:24.0-dind-rootless
+        image: docker:27-dind-rootless
         ports:
           - 2375:2375
     steps:
@@ -76,8 +76,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       - name: build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
