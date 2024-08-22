@@ -48,7 +48,7 @@ var (
 		ID:   "i",
 		Name: "newbie",
 	}
-	preACMERole = discordgo.Role{
+	preCoreRole = discordgo.Role{
 		ID:   "k",
 		Name: "pre-core ACME",
 	}
@@ -72,7 +72,7 @@ func TestGetGuildInfo(t *testing.T) {
 		"everything": {
 			[]*discordgo.Role{
 				&adminRole, &cohort2016, &cohort2019, &cohort2022, &profRole, &taRole, &slRole,
-				&boardRole, &newbieRole, &preACMERole,
+				&boardRole, &newbieRole, &preCoreRole,
 			},
 			bouncerbot.GuildInfo{
 				GuildID:               guildID,
@@ -81,7 +81,7 @@ func TestGetGuildInfo(t *testing.T) {
 				StudentLeadershipRole: slRole.ID,
 				AlumniBoardRole:       boardRole.ID,
 				NewbieRole:            newbieRole.ID,
-				PreACMERole:           preACMERole.ID,
+				PreCoreRole:           preCoreRole.ID,
 				RolesByYear: map[string]string{
 					"2016": cohort2016.ID, "2019": cohort2019.ID, "2022": cohort2022.ID,
 				},
@@ -90,13 +90,13 @@ func TestGetGuildInfo(t *testing.T) {
 		"missingSome": {
 			[]*discordgo.Role{
 				&adminRole, &cohort2016, &cohort2019, &cohort2022, &taRole,
-				&boardRole, &preACMERole,
+				&boardRole, &preCoreRole,
 			},
 			bouncerbot.GuildInfo{
 				GuildID:         guildID,
 				TARole:          taRole.ID,
 				AlumniBoardRole: boardRole.ID,
-				PreACMERole:     preACMERole.ID,
+				PreCoreRole:     preCoreRole.ID,
 				RolesByYear: map[string]string{
 					"2016": cohort2016.ID, "2019": cohort2019.ID, "2022": cohort2022.ID,
 				},
@@ -105,7 +105,7 @@ func TestGetGuildInfo(t *testing.T) {
 		"tricky": {
 			[]*discordgo.Role{
 				&adminRole, &trickyRole, &profRole, &taRole, &slRole,
-				&boardRole, &newbieRole, &preACMERole,
+				&boardRole, &newbieRole, &preCoreRole,
 			},
 			bouncerbot.GuildInfo{
 				GuildID:               guildID,
@@ -114,7 +114,7 @@ func TestGetGuildInfo(t *testing.T) {
 				StudentLeadershipRole: slRole.ID,
 				AlumniBoardRole:       boardRole.ID,
 				NewbieRole:            newbieRole.ID,
-				PreACMERole:           preACMERole.ID,
+				PreCoreRole:           preCoreRole.ID,
 			},
 		},
 	}
@@ -145,7 +145,7 @@ func TestGuildInfo_GetRoleIDsForUser(t *testing.T) {
 		StudentLeadershipRole: slRole.ID,
 		AlumniBoardRole:       boardRole.ID,
 		NewbieRole:            newbieRole.ID,
-		PreACMERole:           preACMERole.ID,
+		PreCoreRole:           preCoreRole.ID,
 		RolesByYear: map[string]string{
 			"2016": cohort2016.ID, "2019": cohort2019.ID, "2022": cohort2022.ID,
 		},
@@ -174,7 +174,7 @@ func TestGuildInfo_GetRoleIDsForUser(t *testing.T) {
 		},
 		"pre-core": {
 			&db.User{},
-			[]string{preACMERole.ID},
+			[]string{preCoreRole.ID},
 		},
 	}
 
