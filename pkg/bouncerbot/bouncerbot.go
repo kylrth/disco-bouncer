@@ -299,7 +299,7 @@ var (
 	ErrNoUser = errors.New("user not found")
 )
 
-// Migrate moves the specified user by name from the pre-ACME role to their new cohort role.
+// Migrate moves the specified user by name from the pre-core role to their new cohort role.
 func (b *Bot) Migrate(name, year string) error {
 	if b.guildInfoIsNil() {
 		b.l.Error(
@@ -310,7 +310,7 @@ func (b *Bot) Migrate(name, year string) error {
 
 	b.giLock.RLock()
 	guildID := b.gi.GuildID
-	preACME := b.gi.PreACMERole
+	preCore := b.gi.PreCoreRole
 	cohort, ok := b.gi.RolesByYear[year]
 	b.giLock.RUnlock()
 
@@ -352,11 +352,11 @@ func (b *Bot) Migrate(name, year string) error {
 		return fmt.Errorf("add new cohort role: %w", err)
 	}
 
-	err = b.GuildMemberRoleRemove(guildID, user.User.ID, preACME)
+	err = b.GuildMemberRoleRemove(guildID, user.User.ID, preCore)
 	if err != nil {
-		b.l.Error("msg", "failed to remove pre-ACME role", "user", user)
+		b.l.Error("msg", "failed to remove pre-core role", "user", user)
 
-		return fmt.Errorf("remove pre-ACME role: %w", err)
+		return fmt.Errorf("remove pre-core role: %w", err)
 	}
 
 	return nil

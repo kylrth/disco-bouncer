@@ -132,7 +132,7 @@ func promptUser(c chan<- *db.User) {
 			return
 		}
 
-		fmt.Fprint(os.Stderr, "Finish year (leave empty for pre-ACME or prof): ")
+		fmt.Fprint(os.Stderr, "Finish year (leave empty for pre-core or prof): ")
 		if scanner.Scan() {
 			u.FinishYear = scanner.Text()
 		}

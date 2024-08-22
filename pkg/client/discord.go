@@ -11,7 +11,7 @@ type DiscordService struct {
 	c *Client
 }
 
-// Migrate moves an existing Discord user from the pre-ACME role to the cohort role specified by the
+// Migrate moves an existing Discord user from the pre-core role to the cohort role specified by the
 // given year.
 func (s *DiscordService) Migrate(ctx context.Context, name, year string) error {
 	const p = "/api/discord/migrate"
