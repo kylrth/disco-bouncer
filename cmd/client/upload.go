@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/cobaltspeech/log"
@@ -30,7 +31,7 @@ header below:
 
 If no data is provided on stdin, the information will be prompted for in the terminal.
 
-The finish year may be set to -1 if the user is pre-ACME.
+If the finish year is empty and the professor flag is not set, the user will be considered pre-core.
 
 As users are uploaded, the name and key will be printed to stdout like this:
 
@@ -60,6 +61,18 @@ func upload(l log.Logger, c *client.Client) error {
 	for u := range ch {
 		plainName := u.Name
 
+		if u.FinishYear == "0" || u.FinishYear == "-1" {
+			l.Error(
+				"msg", "Looks like you tried to add a pre-core student. Give a blank finish year "+
+					"instead.",
+				"givenFinishYear", u.FinishYear,
+			)
+		}
+
+		if u.FinishYear != "" && !finishYearMatcher.MatchString(u.FinishYear) {
+			return fmt.Errorf("finish year '%s' does not start with 4 digits", u.FinishYear)
+		}
+
 		id, key, err := c.Users.Upload(context.Background(), u)
 		if err != nil {
 			return fmt.Errorf("upload user: %w", err)
@@ -70,6 +83,8 @@ func upload(l log.Logger, c *client.Client) error {
 
 	return nil
 }
+
+var finishYearMatcher = regexp.MustCompile(`^\d{4}`)
 
 func getInput(c chan<- *db.User) error {
 	// check if info is on stdin
