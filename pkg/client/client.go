@@ -109,7 +109,7 @@ func (c *Client) get(ctx context.Context, p string) (*http.Response, error) {
 	return resp, nil
 }
 
-func unmarshalBody(resp *http.Response, v interface{}) error {
+func unmarshalBody(resp *http.Response, v any) error {
 	data, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
@@ -119,7 +119,7 @@ func unmarshalBody(resp *http.Response, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-func (c *Client) getJSON(ctx context.Context, p string, v interface{}) error {
+func (c *Client) getJSON(ctx context.Context, p string, v any) error {
 	resp, err := c.get(ctx, p)
 	if err != nil {
 		return err
@@ -153,7 +153,7 @@ func (c *Client) post(
 	return resp, nil
 }
 
-func (c *Client) postJSON(ctx context.Context, p string, data interface{}) (*http.Response, error) {
+func (c *Client) postJSON(ctx context.Context, p string, data any) (*http.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (c *Client) postJSON(ctx context.Context, p string, data interface{}) (*htt
 	return c.post(ctx, p, "application/json", bytes.NewBuffer(body))
 }
 
-func (c *Client) postJSONrecvJSON(ctx context.Context, p string, data, v interface{}) error {
+func (c *Client) postJSONrecvJSON(ctx context.Context, p string, data, v any) error {
 	resp, err := c.postJSON(ctx, p, data)
 	if err != nil {
 		return err
@@ -171,7 +171,7 @@ func (c *Client) postJSONrecvJSON(ctx context.Context, p string, data, v interfa
 	return unmarshalBody(resp, v)
 }
 
-func (c *Client) putJSONrecvJSON(ctx context.Context, p string, data, v interface{}) error {
+func (c *Client) putJSONrecvJSON(ctx context.Context, p string, data, v any) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err

@@ -32,7 +32,7 @@ type TableDecrypter struct {
 func (d TableDecrypter) Decrypt(key string) (*db.User, error) {
 	keyHash, err := encrypt.MD5Hash(key)
 	if err != nil {
-		return nil, encrypt.NewErrBadKey(err)
+		return nil, encrypt.NewBadKeyError(err)
 	}
 
 	users, err := d.Table.GetUsers(context.Background(), db.WithKeyHash(keyHash))
@@ -43,7 +43,7 @@ func (d TableDecrypter) Decrypt(key string) (*db.User, error) {
 	for _, user := range users {
 		user.Name, err = encrypt.Decrypt(user.Name, key)
 		if err != nil {
-			if errors.As(err, &encrypt.ErrBadKey{}) {
+			if errors.As(err, &encrypt.BadKeyError{}) {
 				return nil, err
 			}
 

@@ -7,8 +7,6 @@ A bouncer to ask users for their unique code upon entering a Discord server, so 
 You can run the server as a Docker container. Here is an example docker-compose configuration:
 
 ```yml
-version: "3.9"
-
 services:
   discobouncer:
     image: ghcr.io/kylrth/disco-bouncer:latest
@@ -23,11 +21,11 @@ services:
       DATABASE_URL: postgres://discobouncer:SuperSecretPassword@postgres/discobouncer?sslmode=disable
       DISCORD_TOKEN: <token retrieved when creating Discord bot>
   postgres:
-    image: postgres:15
+    image: postgres:18
     user: 1000:1000
     restart: unless-stopped
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql
     environment:
       POSTGRES_PASSWORD: SuperSecretPassword
       POSTGRES_USER: discobouncer

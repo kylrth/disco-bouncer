@@ -4,7 +4,7 @@ BINDIR := bin
 
 ## LINT
 
-LINTER_VERSION := 1.59.1
+LINTER_VERSION := 2.6.1
 LINTER := $(BINDIR)/golangci-lint_$(LINTER_VERSION)
 DEV_OS := $(shell uname -s | tr A-Z a-z)
 

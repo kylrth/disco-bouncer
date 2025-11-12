@@ -138,7 +138,7 @@ func getWithKey(ctx context.Context, c *client.Client, key string) (*db.User, er
 			return user, nil
 		}
 
-		if errors.As(err, &encrypt.ErrInauthenticated{}) {
+		if errors.As(err, &encrypt.InauthenticatedError{}) {
 			// wrong key (wow, hash collision!)
 			continue
 		}

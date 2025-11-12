@@ -71,7 +71,7 @@ func setupDBPool() (done func(), err error) {
 	// start Postgres container
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
-		Tag:        "13",
+		Tag:        "18",
 		Env: []string{
 			"POSTGRES_USER=" + pgUser,
 			"POSTGRES_PASSWORD=" + pgPass,
@@ -98,7 +98,7 @@ func setupDBPool() (done func(), err error) {
 	pool.MaxWait = hardTimeout * time.Second
 	pgURI := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		pgUser, pgPass, resource.GetHostPort("5432/tcp"), pgUser)
-	if err = pool.Retry(func() error {
+	err = pool.Retry(func() error {
 		// apply migrations to set up tables
 		newErr := db.ApplyMigrations(pgURI)
 		if newErr != nil && !isStartupErr(newErr) {
@@ -106,7 +106,8 @@ func setupDBPool() (done func(), err error) {
 		}
 
 		return newErr
-	}); err != nil {
+	})
+	if err != nil {
 		return done, fmt.Errorf("could not connect to postgres instance: %w", err)
 	}
 

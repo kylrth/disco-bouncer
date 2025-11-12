@@ -20,6 +20,7 @@ import (
 // Currently the bot does not support serving more than one guild.
 type Bot struct {
 	*discordgo.Session
+
 	l log.Logger
 	d Decrypter
 
@@ -130,7 +131,7 @@ func (b *Bot) handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	u, err := b.d.Decrypt(m.Content)
 	if err != nil {
-		if errors.As(err, &encrypt.ErrBadKey{}) {
+		if errors.As(err, &encrypt.BadKeyError{}) {
 			b.l.Info("msg", "DM did not provide acceptable key", "key", m.Content, "error", err)
 			b.message(m.ChannelID, messageBadKey)
 

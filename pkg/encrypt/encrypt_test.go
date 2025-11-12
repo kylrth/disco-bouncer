@@ -188,12 +188,12 @@ func TestDecrypt_Errors(t *testing.T) {
 	t.Parallel()
 
 	_, err := encrypt.Decrypt("asdfjkl", key)
-	if !errors.As(err, &encrypt.ErrBadCiphertext{}) {
-		t.Errorf("error did not match ErrBadCiphertext: %v", err)
+	if !errors.As(err, &encrypt.BadCiphertextError{}) {
+		t.Errorf("error did not match BadCiphertextError: %v", err)
 	}
 
 	_, err = encrypt.Decrypt(ciphertext, "asdfjkl")
-	if !errors.As(err, &encrypt.ErrBadKey{}) {
-		t.Errorf("error did not match ErrBadKey: %v", err)
+	if !errors.As(err, &encrypt.BadKeyError{}) {
+		t.Errorf("error did not match BadKeyError: %v", err)
 	}
 }

@@ -16,7 +16,7 @@ import (
 type AnyBcrypt struct{}
 
 // Match matches any string that starts with "$2a$10$".
-func (a AnyBcrypt) Match(v interface{}) bool {
+func (a AnyBcrypt) Match(v any) bool {
 	switch val := v.(type) {
 	case string:
 		return strings.HasPrefix(val, "$2a$10$")
@@ -134,7 +134,8 @@ func TestAdminTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing se
 		t.Errorf("unexpected error from DeleteAdmin: %v", err)
 	}
 
-	if err = mockDB.ExpectationsWereMet(); err != nil {
+	err = mockDB.ExpectationsWereMet()
+	if err != nil {
 		t.Errorf("unfulfilled DB expectations: %v", err)
 	}
 	logger.Done()

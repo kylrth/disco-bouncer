@@ -38,7 +38,8 @@ func Login(l log.Logger, table *db.AdminTable, sessionStore *session.Store) fibe
 			Password string `json:"password"`
 		}
 
-		if err := c.BodyParser(&input); err != nil {
+		err := c.BodyParser(&input)
+		if err != nil {
 			return c.Status(http.StatusBadRequest).
 				SendString(fmt.Sprintf("Failed to parse body: %v", err))
 		}
@@ -53,12 +54,12 @@ func Login(l log.Logger, table *db.AdminTable, sessionStore *session.Store) fibe
 
 		sess, err := sessionStore.Get(c)
 		if err != nil {
-			return serverError(l, c, "Failed to initiate session", HiddenErr{err})
+			return serverError(l, c, "Failed to initiate session", HiddenError{err})
 		}
 		sess.Set("username", input.Username)
 		err = sess.Save()
 		if err != nil {
-			return serverError(l, c, "Failed to save session", HiddenErr{err})
+			return serverError(l, c, "Failed to save session", HiddenError{err})
 		}
 
 		return c.SendString("Login successful")
@@ -82,7 +83,7 @@ func Logout(l log.Logger, sessionStore *session.Store) fiber.Handler {
 
 		err = sess.Destroy()
 		if err != nil {
-			return serverError(l, c, "Failed to remove session", HiddenErr{err})
+			return serverError(l, c, "Failed to remove session", HiddenError{err})
 		}
 
 		l.Debug("msg", "logged out", "user", username)
@@ -98,7 +99,8 @@ func ChangePassword(l log.Logger, table *db.AdminTable, sessionStore *session.St
 			Old string `json:"old"`
 			New string `json:"new"`
 		}
-		if err := c.BodyParser(&input); err != nil {
+		err := c.BodyParser(&input)
+		if err != nil {
 			return c.Status(http.StatusBadRequest).SendString("Failed to parse body")
 		}
 
@@ -123,7 +125,7 @@ func ChangePassword(l log.Logger, table *db.AdminTable, sessionStore *session.St
 
 		success, err := table.CheckPassword(c.Context(), username, input.Old)
 		if err != nil {
-			return serverError(l, c, "Failed to check password", HiddenErr{err})
+			return serverError(l, c, "Failed to check password", HiddenError{err})
 		}
 		if !success {
 			l.Info("msg", "invalid credentials", "user", username)
@@ -137,7 +139,7 @@ func ChangePassword(l log.Logger, table *db.AdminTable, sessionStore *session.St
 				return c.Status(http.StatusBadRequest).SendString("Password too long")
 			}
 
-			return serverError(l, c, "Failed to save password", HiddenErr{err})
+			return serverError(l, c, "Failed to save password", HiddenError{err})
 		}
 
 		return c.SendString("Password updated successfully")

@@ -24,7 +24,8 @@ func changePass(_ log.Logger, c *client.Client, _ []string) error {
 	fmt.Fprint(os.Stderr, "New password: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
-		if err := scanner.Err(); err != nil {
+		err := scanner.Err()
+		if err != nil {
 			return fmt.Errorf("read password: %w", err)
 		}
 

@@ -23,7 +23,8 @@ func Encrypt(text string) (ciphertext, key string, err error) {
 	key = hex.EncodeToString(bkey)
 
 	nonce := make([]byte, nonceLength)
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
 		return "", key, fmt.Errorf("generate nonce: %w", err)
 	}
 
@@ -60,53 +61,53 @@ func WithKeyAndNonce(text string, key, nonce []byte) (string, error) {
 }
 
 // Decrypt decodes plain text from the ciphertext using the provided key. Non-nil errors are either
-// ErrBadCiphertext, ErrBadKey, or ErrInauthenticated.
+// BadCiphertextError, BadKeyError, or InauthenticatedError.
 func Decrypt(ciphertext, key string) (string, error) {
 	bciphertext, err := hex.DecodeString(ciphertext)
 	if err != nil {
-		return "", ErrBadCiphertext{err}
+		return "", BadCiphertextError{err}
 	}
 	if len(bciphertext) < nonceLength {
-		return "", ErrBadCiphertext{errors.New("ciphertext too short")}
+		return "", BadCiphertextError{errors.New("ciphertext too short")}
 	}
 
 	bkey, err := hex.DecodeString(key)
 	if err != nil {
-		return "", ErrBadKey{err}
+		return "", BadKeyError{err}
 	}
 	block, err := aes.NewCipher(bkey)
 	if err != nil {
-		return "", ErrBadKey{err}
+		return "", BadKeyError{err}
 	}
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", ErrBadKey{err}
+		return "", BadKeyError{err}
 	}
 
 	btext, err := aesgcm.Open(nil, bciphertext[:nonceLength], bciphertext[nonceLength:], nil)
 	if err != nil {
-		return string(btext), ErrInauthenticated{err}
+		return string(btext), InauthenticatedError{err}
 	}
 
 	return string(btext), nil
 }
 
-// ErrBadCiphertext is returned if the ciphertext is invalid.
-type ErrBadCiphertext struct {
+// BadCiphertextError is returned if the ciphertext is invalid.
+type BadCiphertextError struct {
 	error
 }
 
-// ErrBadKey is returned if the key is invalid.
-type ErrBadKey struct {
+// BadKeyError is returned if the key is invalid.
+type BadKeyError struct {
 	error
 }
 
-// NewErrBadKey wraps the given error to signify that this error was caused by a bad key.
-func NewErrBadKey(wrap error) ErrBadKey {
-	return ErrBadKey{wrap}
+// NewBadKeyError wraps the given error to signify that this error was caused by a bad key.
+func NewBadKeyError(wrap error) BadKeyError {
+	return BadKeyError{wrap}
 }
 
-// ErrInauthenticated is returned when the key was not the correct one for the ciphertext.
-type ErrInauthenticated struct {
+// InauthenticatedError is returned when the key was not the correct one for the ciphertext.
+type InauthenticatedError struct {
 	error
 }

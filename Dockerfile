@@ -1,4 +1,4 @@
-FROM golang:1.22.5 as builder
+FROM golang:1.25.4 AS builder
 
 ARG TARGETARCH
 
@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go get -v ./... && \
     CGO_ENABLED=0 go build -ldflags="-extldflags=-static" -o /bouncer ./cmd
 
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static-debian12
 COPY --from=builder /bouncer /bouncer
 USER 1000
 
