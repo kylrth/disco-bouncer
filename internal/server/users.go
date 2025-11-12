@@ -61,11 +61,11 @@ func GetUser(l log.Logger, table *db.UserTable) fiber.Handler {
 func CreateUser(l log.Logger, table *db.UserTable) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var user db.User
-		if err := c.BodyParser(&user); err != nil {
+		err := c.BodyParser(&user)
+		if err != nil {
 			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
 
-		var err error
 		user.ID, err = table.CreateUser(c.Context(), &user)
 		if err != nil {
 			return serverError(l, c, "Database error", err)
@@ -86,7 +86,8 @@ func UpdateUser(l log.Logger, table *db.UserTable) fiber.Handler {
 		}
 
 		var user db.User
-		if err = c.BodyParser(&user); err != nil {
+		err = c.BodyParser(&user)
+		if err != nil {
 			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
 

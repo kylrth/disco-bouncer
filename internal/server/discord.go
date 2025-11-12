@@ -28,11 +28,12 @@ type Migrator interface {
 func MigrateUser(l log.Logger, dg *bouncerbot.Bot) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var migration Migration
-		if err := c.BodyParser(&migration); err != nil {
+		err := c.BodyParser(&migration)
+		if err != nil {
 			return c.Status(http.StatusBadRequest).SendString(err.Error())
 		}
 
-		err := dg.Migrate(migration.Name, migration.Year)
+		err = dg.Migrate(migration.Name, migration.Year)
 		if err != nil {
 			if errors.Is(err, bouncerbot.ErrNoUser) {
 				return c.Status(http.StatusNotFound).SendString("User not found")

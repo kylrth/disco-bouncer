@@ -11,7 +11,7 @@ import (
 	"github.com/kylrth/disco-bouncer/pkg/encrypt"
 )
 
-// UserService is used to view and modify the users table on the server.
+// UsersService is used to view and modify the users table on the server.
 type UsersService struct {
 	c *Client
 }

@@ -14,12 +14,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
-        go-version-file: 'go.mod'
+        go-version-file: go.mod
 
     - name: ensure go mod tidy
       run: go mod tidy && git diff --exit-code go.mod go.sum
@@ -29,19 +29,18 @@ jobs:
       run: echo "version=$(grep 'LINTER_VERSION :=' Makefile | awk '{print $3}')" > $GITHUB_OUTPUT
 
     - name: lint
-      uses: golangci/golangci-lint-action@v6
+      uses: golangci/golangci-lint-action@v9
       with:
         version: v${{ steps.linter-version.outputs.version }}
-        args: --timeout=15m
 
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
-        go-version-file: 'go.mod'
+        go-version-file: go.mod
     - name: test
       run: go test -race -cover -short ./...
   test-docker:
@@ -49,26 +48,26 @@ jobs:
     needs: [test]
     services:
       dind:
-        image: docker:27-dind-rootless
+        image: docker:29-dind-rootless
         ports:
           - 2375:2375
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
-        go-version-file: 'go.mod'
+        go-version-file: go.mod
     - name: test
       run: go test -race -cover ./...
 
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
-        go-version-file: 'go.mod'
+        go-version-file: go.mod
     - name: build
       run: make build
 

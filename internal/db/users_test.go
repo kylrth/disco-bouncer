@@ -177,18 +177,19 @@ func TestUserTable(t *testing.T) { //nolint:cyclop,funlen,gocyclo // testing seq
 		t.Errorf("unexpected error from GetUser: %v", err)
 	}
 
-	if err = mockDB.ExpectationsWereMet(); err != nil {
+	err = mockDB.ExpectationsWereMet()
+	if err != nil {
 		t.Errorf("unfulfilled DB expectations: %v", err)
 	}
 	logger.Done()
 }
 
 type withArgser[T any] interface {
-	WithArgs(args ...interface{}) T
+	WithArgs(args ...any) T
 }
 
 func withUserArgs[T withArgser[T]](u *db.User, mdb T, withID bool) T {
-	args := make([]interface{}, 0, 8)
+	args := make([]any, 0, 8)
 	if withID {
 		args = append(args, u.ID)
 	}

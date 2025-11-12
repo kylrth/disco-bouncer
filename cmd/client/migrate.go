@@ -73,7 +73,7 @@ func init() {
 
 func isMigrateHeader(line []string) bool {
 	return line[0] == "id" &&
-		line[1] == "name" && //nolint:goconst // This usage isn't really the same as the logging usages.
+		line[1] == "name" &&
 		line[2] == "key"
 }
 
@@ -164,7 +164,7 @@ func migrateByKey(ctx context.Context, l log.Logger, c *client.Client, key, year
 
 	for _, u := range users {
 		_, err = encrypt.Decrypt(u.Name, key)
-		if errors.As(err, &encrypt.ErrInauthenticated{}) {
+		if errors.As(err, &encrypt.InauthenticatedError{}) {
 			// wrong key (wow, hash collision!)
 			continue
 		}

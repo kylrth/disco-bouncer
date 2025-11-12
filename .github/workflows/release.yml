@@ -12,22 +12,20 @@ jobs:
   binary:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
-        go-version-file: 'go.mod'
+        go-version-file: go.mod
 
     - name: build binaries
       run: make release
 
     - name: release binary to GitHub
-      uses: skx/github-action-publish-binaries@release-2.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        args: 'bin/release/*'
+        files: "bin/release/*"
 
   image:
     runs-on: ubuntu-latest

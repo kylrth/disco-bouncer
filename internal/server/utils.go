@@ -8,14 +8,14 @@ import (
 )
 
 // HiddenError signifies that an error should be logged but not reported to the client.
-type HiddenErr struct {
+type HiddenError struct {
 	error
 }
 
 func serverError(l log.Logger, c *fiber.Ctx, msg string, err error) error {
 	l.Error("msg", "internal server error", "message", msg, "error", err)
 
-	if _, ok := err.(HiddenErr); !ok { //nolint:errorlint // just checking top error type
+	if _, ok := err.(HiddenError); !ok { //nolint:errorlint // just checking top error type
 		msg += ": " + err.Error()
 	}
 
